@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import type { User, AdminEvent, AdminRequest } from '@/lib/types'
 import { Role, EventStatus, RequestStatus } from '@/lib/types'
+import { DashboardProfile } from '@/components/dashboard/DashboardProfile'
 import { getCurrentUser } from '@/lib/auth'
 import { shouldRedirect } from '@/lib/roleGuard'
 import { useMounted } from '@/hooks/useMounted'
@@ -53,6 +54,7 @@ export default function AdminDashboardPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const mounted = useMounted()
+  const [profileUser, setProfileUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'events' | 'requests'>('overview')
   const [error, setError] = useState<string | null>(null)
   
@@ -69,7 +71,11 @@ export default function AdminDashboardPage() {
   const [requestPage, setRequestPage] = useState(0)
   const pageSize = 10
 
-  const currentUser = mounted ? getCurrentUser() : null
+  const currentUser = mounted ? (profileUser ?? getCurrentUser()) : null
+
+  useEffect(() => {
+    if (mounted) setProfileUser(getCurrentUser())
+  }, [mounted])
 
   useEffect(() => {
     if (!mounted) return
@@ -203,6 +209,17 @@ export default function AdminDashboardPage() {
             </GlowButton>
           </div>
         </motion.div>
+
+        {currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6"
+          >
+            <DashboardProfile user={currentUser} onUserUpdate={setProfileUser} />
+          </motion.div>
+        )}
 
         {error && (
           <motion.div

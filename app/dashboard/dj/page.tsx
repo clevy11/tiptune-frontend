@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3 } from 'lucide-react'
-import type { DjEvent, DjSongRequest, EventRequest, Notification } from '@/lib/types'
+import type { DjEvent, DjSongRequest, EventRequest, Notification, User } from '@/lib/types'
 import { EventStatus, RequestStatus, Role } from '@/lib/types'
+import { DashboardProfile } from '@/components/dashboard/DashboardProfile'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ToastNotification } from '@/components/notifications/ToastNotification'
 import { useNotificationStore } from '@/store/notificationStore'
@@ -34,6 +35,7 @@ export default function DjDashboardPage() {
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [profileUser, setProfileUser] = useState<User | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [createEventError, setCreateEventError] = useState<string | null>(null)
   const [newEvent, setNewEvent] = useState<EventRequest>({
@@ -44,9 +46,12 @@ export default function DjDashboardPage() {
     status: EventStatus.ACTIVE,
   })
 
-  // Only read from localStorage after mount to avoid hydration mismatch
-  const currentUser = mounted ? getCurrentUser() : null
+  const currentUser = mounted ? (profileUser ?? getCurrentUser()) : null
   const currentUserId = mounted ? getCurrentUserId() : null
+
+  useEffect(() => {
+    if (mounted) setProfileUser(getCurrentUser())
+  }, [mounted])
 
   // Role guard
   useEffect(() => {
@@ -77,6 +82,7 @@ export default function DjDashboardPage() {
     enabled: !!selectedEventId && !!currentUser,
     staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
+    refetchInterval: 15 * 1000, // Requests appear automatically every 15s without refresh
   })
 
   useEffect(() => {
@@ -327,6 +333,17 @@ export default function DjDashboardPage() {
             </Button>
           </div>
         </motion.div>
+
+        {currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6"
+          >
+            <DashboardProfile user={currentUser} onUserUpdate={setProfileUser} />
+          </motion.div>
+        )}
 
         {/* Create Event Modal */}
         <AnimatePresence>

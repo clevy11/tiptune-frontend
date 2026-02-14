@@ -164,7 +164,7 @@ export default function PublicEventPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-x-hidden">
       <AnimatedBackground />
       
       <div className="relative z-10 container mx-auto px-6 py-12">

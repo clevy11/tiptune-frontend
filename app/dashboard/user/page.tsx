@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -10,8 +10,9 @@ import { DashboardBackground } from '@/components/theme/DashboardBackground'
 import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
 import { Button } from '@/components/ui/button'
+import { DashboardProfile } from '@/components/dashboard/DashboardProfile'
 import { Music, LogOut, Calendar, User as UserIcon, Sparkles, ListMusic } from 'lucide-react'
-import type { PublicEvent, SongRequest } from '@/lib/types'
+import type { PublicEvent, SongRequest, User } from '@/lib/types'
 import { RequestStatus } from '@/lib/types'
 import { Role } from '@/lib/types'
 import { getCurrentUser } from '@/lib/auth'
@@ -21,8 +22,12 @@ import { useMounted } from '@/hooks/useMounted'
 export default function UserDashboardPage() {
   const router = useRouter()
   const mounted = useMounted()
-  // Only read from localStorage after mount to avoid hydration mismatch
-  const currentUser = mounted ? getCurrentUser() : null
+  const [profileUser, setProfileUser] = useState<User | null>(null)
+  const currentUser = mounted ? (profileUser ?? getCurrentUser()) : null
+
+  useEffect(() => {
+    if (mounted) setProfileUser(getCurrentUser())
+  }, [mounted])
 
   // Role guard
   useEffect(() => {
@@ -80,31 +85,30 @@ export default function UserDashboardPage() {
     <div className="min-h-screen relative overflow-hidden">
       <DashboardBackground />
       <div className="relative z-10 container mx-auto px-6 py-8">
-        {/* Header */}
+        {/* Profile + Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mb-8"
+          className="mb-8"
         >
-          <div className="flex items-center gap-3">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Sparkles className="w-8 h-8 text-pink-400" />
-            </motion.div>
-            <h1 className="text-3xl font-bold text-gradient">Nightlife Events</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 glass rounded-lg px-4 py-2">
-              <UserIcon className="w-4 h-4 text-purple-400" />
-              <span className="text-sm text-gray-300">{currentUser.name}</span>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Sparkles className="w-8 h-8 text-pink-400" />
+              </motion.div>
+              <h1 className="text-3xl font-bold text-gradient">Nightlife Events</h1>
             </div>
-            <Button variant="ghost" onClick={handleLogout}>
+            <Button variant="ghost" onClick={handleLogout} className="self-start sm:self-center">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
           </div>
+          {currentUser && (
+            <DashboardProfile user={currentUser} onUserUpdate={setProfileUser} className="mb-0" />
+          )}
         </motion.div>
 
         {/* My Requests Section */}

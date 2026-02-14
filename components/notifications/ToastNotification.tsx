@@ -3,27 +3,14 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Music, X } from 'lucide-react'
 import { useNotificationStore } from '@/store/notificationStore'
-import { useEffect } from 'react'
 import type { Notification } from '@/lib/types'
 
-const TOAST_DURATION = 6000 // 6 seconds
-
+/** Toasts do NOT auto-dismiss; notifications stay until Accept/Decline in panel. */
 export function ToastNotification() {
-  const { notifications, removeNotification } = useNotificationStore()
+  const { notifications, markAsRead } = useNotificationStore()
   
-  // Get unread notifications for toast display
+  // Show latest unread (no auto-remove)
   const unreadNotifications = notifications.filter((n) => !n.isRead).slice(0, 3)
-
-  useEffect(() => {
-    // Auto-dismiss after duration
-    unreadNotifications.forEach((notification) => {
-      const timer = setTimeout(() => {
-        removeNotification(notification.id)
-      }, TOAST_DURATION)
-
-      return () => clearTimeout(timer)
-    })
-  }, [unreadNotifications, removeNotification])
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-3 pointer-events-none">
@@ -46,11 +33,11 @@ interface ToastItemProps {
 }
 
 function ToastItem({ notification, index }: ToastItemProps) {
-  const { removeNotification, markAsRead } = useNotificationStore()
+  const { markAsRead } = useNotificationStore()
 
   const handleClose = () => {
     markAsRead(notification.id)
-    removeNotification(notification.id)
+    // Do NOT remove — notification stays in panel until Accept/Decline
   }
 
   return (
@@ -125,13 +112,7 @@ function ToastItem({ notification, index }: ToastItemProps) {
           </motion.button>
         </div>
 
-        {/* Progress bar */}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"
-          initial={{ width: '100%' }}
-          animate={{ width: '0%' }}
-          transition={{ duration: TOAST_DURATION / 1000, ease: 'linear' }}
-        />
+        {/* No progress bar — notifications stay until action in panel */}
       </div>
     </motion.div>
   )

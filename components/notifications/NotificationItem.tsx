@@ -1,10 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Music, X, CheckCircle2 } from 'lucide-react'
+import { Music, X, CheckCircle2, XCircle } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationStore } from '@/store/notificationStore'
+import { songRequestApi } from '@/lib/api'
 import type { Notification } from '@/lib/types'
+import { RequestStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { GlowButton } from '@/components/GlowButton'
 
 interface NotificationItemProps {
   notification: Notification
@@ -13,7 +17,35 @@ interface NotificationItemProps {
 
 export function NotificationItem({ notification, index }: NotificationItemProps) {
   const { markAsRead, removeNotification } = useNotificationStore()
+  const queryClient = useQueryClient()
   const isRead = notification.isRead
+  const songRequest = notification.songRequest
+  const isPending = songRequest && songRequest.status === RequestStatus.PENDING
+  const eventId = songRequest?.event?.id
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: RequestStatus }) =>
+      songRequestApi.updateStatus(id, status),
+    onSuccess: (_, { id }) => {
+      removeNotification(notification.id)
+      queryClient.invalidateQueries({ queryKey: ['dj-requests'] })
+      if (eventId) {
+        queryClient.invalidateQueries({ queryKey: ['dj-requests', eventId] })
+      }
+    },
+  })
+
+  const handleAccept = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!songRequest) return
+    updateStatusMutation.mutate({ id: songRequest.id, status: RequestStatus.ACCEPTED })
+  }
+
+  const handleDecline = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!songRequest) return
+    updateStatusMutation.mutate({ id: songRequest.id, status: RequestStatus.DECLINED })
+  }
 
   const handleClick = () => {
     if (!isRead) {
@@ -40,13 +72,11 @@ export function NotificationItem({ notification, index }: NotificationItemProps)
         isRead && 'opacity-70'
       )}
     >
-      {/* Glow effect for unread */}
       {!isRead && (
-        <div className="absolute inset-0 rounded-xl glow-purple opacity-30 blur-sm" />
+        <div className="absolute inset-0 rounded-xl glow-purple opacity-30 blur-sm pointer-events-none" />
       )}
 
       <div className="relative flex items-start gap-3">
-        {/* Icon */}
         <motion.div
           animate={!isRead ? { scale: [1, 1.1, 1] } : {}}
           transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
@@ -60,39 +90,69 @@ export function NotificationItem({ notification, index }: NotificationItemProps)
           <Music className="w-5 h-5 text-white" />
         </motion.div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <p className={cn('text-sm font-medium', !isRead ? 'text-white' : 'text-gray-400')}>
             {notification.message}
           </p>
-          {notification.songRequest && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-              <span className="font-medium">{notification.songRequest.song.title}</span>
-              <span>•</span>
-              <span>{notification.songRequest.song.artist}</span>
-            </div>
+          {songRequest && (
+            <>
+              <div className="mt-2 flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+                <span className="font-medium">{songRequest.song.title}</span>
+                <span>•</span>
+                <span>{songRequest.song.artist}</span>
+              </div>
+              {songRequest.user?.name && (
+                <p className="text-xs text-gray-500 mt-1">From: {songRequest.user.name}</p>
+              )}
+              {songRequest.event?.name && (
+                <p className="text-xs text-gray-500">Event: {songRequest.event.name}</p>
+              )}
+              <div className="mt-2 flex items-center gap-2">
+                <span
+                  className={cn(
+                    'px-2 py-0.5 rounded text-xs font-medium',
+                    songRequest.status === RequestStatus.PENDING && 'bg-yellow-500/20 text-yellow-400'
+                  )}
+                >
+                  {songRequest.status}
+                </span>
+              </div>
+            </>
           )}
           <p className="text-xs text-gray-500 mt-1">
             {new Date(notification.createdAt).toLocaleTimeString()}
           </p>
+
+          {/* Accept / Decline — only for pending song requests; remove only when action taken */}
+          {isPending && songRequest && (
+            <div className="flex gap-2 mt-3 flex-wrap">
+              <GlowButton
+                size="sm"
+                glowColor="green"
+                variant="outline"
+                onClick={handleAccept}
+                disabled={updateStatusMutation.isPending}
+                className="min-h-[44px] touch-manipulation flex-1 min-w-[100px]"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-1" />
+                Accept
+              </GlowButton>
+              <GlowButton
+                size="sm"
+                glowColor="red"
+                variant="outline"
+                onClick={handleDecline}
+                disabled={updateStatusMutation.isPending}
+                className="min-h-[44px] touch-manipulation flex-1 min-w-[100px]"
+              >
+                <XCircle className="w-4 h-4 mr-1" />
+                Decline
+              </GlowButton>
+            </div>
+          )}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {!isRead && (
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.stopPropagation()
-                markAsRead(notification.id)
-              }}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-              aria-label="Mark as read"
-            >
-              <CheckCircle2 className="w-4 h-4 text-green-400" />
-            </motion.button>
-          )}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -104,18 +164,6 @@ export function NotificationItem({ notification, index }: NotificationItemProps)
           </motion.button>
         </div>
       </div>
-
-      {/* Sound wave animation for unread */}
-      {!isRead && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden rounded-b-xl">
-          <motion.div
-            className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"
-            initial={{ width: '0%' }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 6, ease: 'linear' }}
-          />
-        </div>
-      )}
     </motion.div>
   )
 }
