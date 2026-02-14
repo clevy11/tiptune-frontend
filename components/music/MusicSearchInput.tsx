@@ -109,7 +109,7 @@ export function MusicSearchInput({
   }
 
   return (
-    <div ref={containerRef} className={cn('relative', className)}>
+    <div ref={containerRef} className={cn('relative overflow-visible', className)}>
       {/* Search Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -144,7 +144,7 @@ export function MusicSearchInput({
         )}
       </div>
 
-      {/* Dropdown Results */}
+      {/* Dropdown Results — high z-index, full width, scrollable; visible on mobile */}
       <AnimatePresence>
         {isOpen && (isLoading || results.length > 0 || error) && (
           <motion.div
@@ -152,7 +152,7 @@ export function MusicSearchInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 mt-2 glass rounded-xl shadow-2xl border border-purple-500/30 glow-purple z-50 max-h-96 overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-2 w-full min-w-0 glass rounded-xl shadow-2xl border border-purple-500/30 glow-purple z-[100] max-h-[300px] overflow-y-auto overflow-x-hidden"
           >
             {isLoading ? (
               <div className="p-8 flex flex-col items-center justify-center">

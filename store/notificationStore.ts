@@ -88,8 +88,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   addSongRequestNotification: (songRequest) => {
+    const state = get()
+    // Dedupe: do not add if we already have a notification for this request
+    const exists = state.notifications.some(
+      (n) => n.songRequest?.id === songRequest.id
+    )
+    if (exists) return
+
     const notification: Notification = {
-      id: Date.now(), // Temporary ID, backend will provide real ID
+      id: songRequest.id,
       message: `New song request: ${songRequest.song.title} by ${songRequest.song.artist}`,
       isRead: false,
       createdAt: new Date().toISOString(),
