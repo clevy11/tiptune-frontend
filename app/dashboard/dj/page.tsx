@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,9 +13,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3 } from 'lucide-react'
-import type { DjEvent, DjSongRequest, EventRequest, Notification, User } from '@/lib/types'
+import type { DjEvent, DjSongRequest, EventRequest, Notification, User, SongRequest } from '@/lib/types'
 import { EventStatus, RequestStatus, Role } from '@/lib/types'
 import { DashboardProfile } from '@/components/dashboard/DashboardProfile'
+import { DjRequestCard } from '@/components/dashboard/DjRequestCard'
+import { songRequestToDj } from '@/lib/djRequestUtils'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ToastNotification } from '@/components/notifications/ToastNotification'
 import { useNotificationStore } from '@/store/notificationStore'
@@ -82,7 +84,7 @@ export default function DjDashboardPage() {
     enabled: !!selectedEventId && !!currentUser,
     staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchInterval: 15 * 1000, // Requests appear automatically every 15s without refresh
+    refetchInterval: 30 * 1000, // Background sync every 30s; instant updates via WebSocket injection
   })
 
   useEffect(() => {
@@ -94,13 +96,29 @@ export default function DjDashboardPage() {
 
   const { addSongRequestNotification } = useNotificationStore()
 
-  // Subscribe to DJ notifications
+  // Inject new request into React Query cache so list updates instantly (no refetch)
+  const injectRequestIntoCache = useCallback(
+    (sr: SongRequest) => {
+      const eventId = sr.event?.id
+      if (eventId == null) return
+      const mapped = songRequestToDj(sr)
+      queryClient.setQueryData<DjSongRequest[]>(['dj-requests', eventId], (old) => {
+        const list = old ?? []
+        if (list.some((r) => r.id === mapped.id)) return list
+        return [mapped, ...list]
+      })
+    },
+    [queryClient]
+  )
+
+  // Subscribe to DJ notifications — show notification AND inject request into list immediately
   useEffect(() => {
     if (!currentUserId) return
 
     const handleNotification = (notification: Notification) => {
       if (notification.songRequest) {
         addSongRequestNotification(notification.songRequest)
+        injectRequestIntoCache(notification.songRequest)
       } else {
         useNotificationStore.getState().addNotification(notification)
       }
@@ -114,7 +132,25 @@ export default function DjDashboardPage() {
       clearTimeout(timeoutId)
       websocketService.unsubscribeFromDjNotifications(currentUserId, handleNotification)
     }
-  }, [currentUserId, addSongRequestNotification])
+  }, [currentUserId, addSongRequestNotification, injectRequestIntoCache])
+
+  // Subscribe to event-specific request topic for selected event (instant push for this event)
+  useEffect(() => {
+    if (!selectedEventId) return
+
+    const handleNewRequest = (sr: SongRequest) => {
+      injectRequestIntoCache(sr)
+    }
+
+    const timeoutId = setTimeout(() => {
+      websocketService.subscribeToEventRequests(selectedEventId, handleNewRequest)
+    }, 300)
+
+    return () => {
+      clearTimeout(timeoutId)
+      websocketService.unsubscribeFromEventRequests(selectedEventId, handleNewRequest)
+    }
+  }, [selectedEventId, injectRequestIntoCache])
 
   useEffect(() => {
     if (!selectedEventId) {
@@ -174,8 +210,11 @@ export default function DjDashboardPage() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: RequestStatus }) =>
       songRequestApi.updateStatus(id, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dj-requests', selectedEventId] })
+    onSuccess: (_, { id, status }) => {
+      if (!selectedEventId) return
+      queryClient.setQueryData<DjSongRequest[]>(['dj-requests', selectedEventId], (old) =>
+        old ? old.map((r) => (r.id === id ? { ...r, status } : r)) : old
+      )
     },
   })
 
@@ -200,9 +239,12 @@ export default function DjDashboardPage() {
     createEventMutation.mutate(newEvent)
   }
 
-  const handleStatusUpdate = (id: number, status: RequestStatus) => {
-    updateStatusMutation.mutate({ id, status })
-  }
+  const handleStatusUpdate = useCallback(
+    (id: number, status: RequestStatus) => {
+      updateStatusMutation.mutate({ id, status })
+    },
+    [updateStatusMutation]
+  )
 
   const handleLogout = () => {
     authApi.logout()
@@ -566,74 +608,11 @@ export default function DjDashboardPage() {
                   <div className="space-y-3">
                     {requests && requests.length > 0 ? (
                       requests.map((request) => (
-                        <motion.div
+                        <DjRequestCard
                           key={request.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="glass rounded-lg p-4"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
-                              <p className="font-medium">{request.songTitle}</p>
-                              <p className="text-sm text-gray-400">{request.songArtist}</p>
-                              {request.message && (
-                                <p className="text-sm text-gray-500 mt-1">{request.message}</p>
-                              )}
-                              <p className="text-xs text-gray-500 mt-1">
-                                Requested by {request.requesterName}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                request.status === RequestStatus.ACCEPTED
-                                  ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                                  : request.status === RequestStatus.DECLINED
-                                  ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                                  : request.status === RequestStatus.PLAYED
-                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                                  : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
-                              }`}
-                            >
-                              {request.status}
-                            </span>
-                          </div>
-                          {request.status === RequestStatus.PENDING && (
-                            <div className="flex gap-2 mt-3">
-                              <GlowButton
-                                onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)}
-                                glowColor="green"
-                                size="sm"
-                                variant="outline"
-                                className="flex-1"
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                Accept
-                              </GlowButton>
-                              <GlowButton
-                                onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)}
-                                glowColor="red"
-                                size="sm"
-                                variant="outline"
-                                className="flex-1"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Decline
-                              </GlowButton>
-                            </div>
-                          )}
-                          {request.status === RequestStatus.ACCEPTED && (
-                            <GlowButton
-                              onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)}
-                              glowColor="blue"
-                              size="sm"
-                              variant="outline"
-                              className="w-full mt-3"
-                            >
-                              <PlayCircle className="w-4 h-4 mr-1" />
-                              Mark as Played
-                            </GlowButton>
-                          )}
-                        </motion.div>
+                          request={request}
+                          onStatusUpdate={handleStatusUpdate}
+                        />
                       ))
                     ) : (
                       <p className="text-gray-400 text-center py-8">No requests yet</p>
