@@ -16,8 +16,8 @@ interface MusicSearchInputProps {
   placeholder?: string
 }
 
-const DEBOUNCE_DELAY = 350
-const MIN_QUERY_LENGTH = 2
+const DEBOUNCE_DELAY = 400
+const MIN_QUERY_LENGTH = 3
 const DEFAULT_DROPDOWN_MAX_HEIGHT = 320
 
 /** Get safe max height for dropdown above keyboard (visual viewport). */
@@ -42,6 +42,7 @@ export function MusicSearchInput({
   const [error, setError] = useState<string | null>(null)
   const [dropdownMaxHeight, setDropdownMaxHeight] = useState(DEFAULT_DROPDOWN_MAX_HEIGHT)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const expectedQueryRef = useRef<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -66,13 +67,16 @@ export function MusicSearchInput({
       abortControllerRef.current.abort()
     }
 
-    if (searchQuery.length < MIN_QUERY_LENGTH) {
+    const trimmed = searchQuery.trim()
+    if (trimmed.length < MIN_QUERY_LENGTH) {
       setResults([])
       setIsLoading(false)
       setIsOpen(false)
+      setError(null)
       return
     }
 
+    expectedQueryRef.current = trimmed
     setIsLoading(true)
     setError(null)
     setIsOpen(true)
@@ -82,17 +86,24 @@ export function MusicSearchInput({
     abortControllerRef.current = controller
 
     try {
-      const searchResults = await musicApi.searchMusic(searchQuery, 15, controller.signal)
+      const searchResults = await musicApi.searchMusic(trimmed, 15, controller.signal)
       if (controller.signal.aborted) return
+      if (expectedQueryRef.current !== trimmed) return
       setResults(searchResults)
       setIsOpen(true)
     } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        setError('Failed to search. Please try again.')
-        console.error('Search error:', err)
+      if (err instanceof Error && err.name === 'AbortError') {
+        return
       }
+      if (err instanceof Error && err.message === 'RATE_LIMIT') {
+        setError('Too many searches. Please wait a moment and try again.')
+        console.warn('iTunes search rate limited')
+        return
+      }
+      setError('Search failed. Please check your connection and try again.')
+      console.error('Search error:', err)
     } finally {
-      if (!controller.signal.aborted) {
+      if (!controller.signal.aborted && expectedQueryRef.current === trimmed) {
         setIsLoading(false)
       }
     }
@@ -206,10 +217,13 @@ export function MusicSearchInput({
                   <p className="text-sm text-red-400">{error}</p>
                 </div>
               ) : results.length === 0 ? (
-                <div className="p-8 flex flex-col items-center justify-center">
+                <div className="p-6 flex flex-col items-center justify-center text-center">
                   <Music className="w-12 h-12 text-gray-600 mb-3" />
                   <p className="text-sm text-gray-400">No results found</p>
                   <p className="text-xs text-gray-500 mt-1">Try a different search term</p>
+                  <p className="text-xs text-purple-300/90 mt-3 px-2">
+                    Can&apos;t find your song? Fill in the title and artist manually below.
+                  </p>
                 </div>
               ) : (
                 results.map((result) => (

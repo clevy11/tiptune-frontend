@@ -174,7 +174,10 @@ export default function PublicEventPage() {
                 ? error.message 
                 : 'The event you&apos;re looking for doesn&apos;t exist or has expired.'}
             </p>
-            <GlowButton
+            <p className="text-sm text-gray-400 mb-4">
+              This event is no longer open or does not exist.
+              </p>
+              <GlowButton
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   window.location.href = '/'
@@ -289,6 +292,9 @@ export default function PublicEventPage() {
                     selectedResult={selectedSong}
                     placeholder="Type song name or artist..."
                   />
+                  <p className="text-xs text-gray-500 mt-2">
+                    If you don&apos;t find your song in search, fill in the title and artist manually below.
+                  </p>
                 </motion.div>
                 
                 {/* Manual input fields (shown when song is selected or for manual entry) */}

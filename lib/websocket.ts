@@ -2,7 +2,16 @@ import { Client, IMessage } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import type { SongRequest, Notification } from './types'
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080/ws'
+const WS_URL_DEFAULT = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080/ws'
+
+/** Same host as the page when on mobile (e.g. http://MAC_IP:8080/ws) so WS works without env vars. */
+function getEffectiveWsUrl(): string {
+  if (typeof window === 'undefined') return WS_URL_DEFAULT
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return `http://${window.location.hostname}:8080/ws`
+  }
+  return WS_URL_DEFAULT
+}
 
 export interface EventRevenuePayload {
   eventId: number
@@ -31,7 +40,7 @@ class WebSocketService {
     }
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(WS_URL) as any,
+      webSocketFactory: () => new SockJS(getEffectiveWsUrl()) as any,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

@@ -18,11 +18,28 @@ import type {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
+/** When opening the app from another device (e.g. phone at http://MAC_IP:3000), use same host for API so requests hit your machine, not "localhost". */
+export function getEffectiveApiBaseUrl(): string {
+  if (typeof window === 'undefined') return API_BASE_URL
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return `http://${window.location.hostname}:8080/api/v1`
+  }
+  return API_BASE_URL
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+})
+
+// Use correct API host when in browser (e.g. mobile opening http://MAC_IP:3000)
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    config.baseURL = getEffectiveApiBaseUrl()
+  }
+  return config
 })
 
 // Request interceptor to add auth token
@@ -197,10 +214,11 @@ export const eventApi = {
   },
 
   getByAccessToken: async (accessToken: string): Promise<Event> => {
+    const base = typeof window !== 'undefined' ? getEffectiveApiBaseUrl() : API_BASE_URL
+    const eventBase = base.replace(/\/api\/v1\/?$/, '')
+    const url = `${eventBase}/event/${accessToken}`
     try {
-      const response = await axios.get<Event>(
-        `${API_BASE_URL.replace('/api/v1', '')}/event/${accessToken}`
-      )
+      const response = await axios.get<Event>(url)
       if (!response.data) {
         throw new Error('Event not found')
       }
@@ -208,6 +226,11 @@ export const eventApi = {
     } catch (error: any) {
       if (error.response?.status === 404) {
         throw new Error('Event not found')
+      }
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          "The  event you are looking for is not available or  is no longer open. Please try again later or login to events to see events that are still open.."
+        )
       }
       throw error
     }
