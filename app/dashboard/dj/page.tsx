@@ -26,6 +26,7 @@ import { getApiErrorMessage } from '@/lib/apiClient'
 import { ErrorMessage, FieldErrorWrapper } from '@/components/ui/ErrorMessage'
 import { MobileDrawer } from '@/components/ui/MobileDrawer'
 import { QRDownload } from '@/components/export/QRDownload'
+import { sanitizeEventNameForFile } from '@/lib/utils'
 import { ReportExport } from '@/components/export/ReportExport'
 
 export default function DjDashboardPage() {
@@ -278,31 +279,54 @@ export default function DjDashboardPage() {
 
   const selectedEvent = events?.find((e) => e.id === selectedEventId)
 
+  const totalTipRevenue = events?.reduce((sum, e) => sum + (Number(e.totalTipRevenue) || 0), 0) ?? 0
+  const tippedCount = requests?.filter((r) => (Number(r.tipAmount) || 0) > 0).length ?? 0
+  const tippedRequests = requests?.filter((r) => (Number(r.tipAmount) || 0) > 0) ?? []
+  const highestTip = tippedRequests.length ? Math.max(...tippedRequests.map((r) => Number(r.tipAmount) || 0)) : 0
+  const lowestTip = tippedRequests.length ? Math.min(...tippedRequests.map((r) => Number(r.tipAmount) || 0)) : 0
+  const avgTip = tippedRequests.length ? Math.round(tippedRequests.reduce((s, r) => s + (Number(r.tipAmount) || 0), 0) / tippedRequests.length) : 0
+
   const djReportSummary = [
+    { label: 'Total revenue (RWF)', value: totalTipRevenue.toLocaleString() },
     { label: 'Total events', value: events?.length ?? 0 },
     { label: 'Total requests', value: requests?.length ?? 0 },
+    { label: 'Total tipped requests', value: tippedCount },
+    { label: 'Average tip (RWF)', value: avgTip.toLocaleString() },
+    { label: 'Highest tip (RWF)', value: highestTip.toLocaleString() },
+    { label: 'Lowest tip (RWF)', value: lowestTip === Infinity ? '0' : lowestTip.toLocaleString() },
     { label: 'Pending', value: requests?.filter((r) => r.status === RequestStatus.PENDING).length ?? 0 },
     { label: 'Accepted', value: requests?.filter((r) => r.status === RequestStatus.ACCEPTED).length ?? 0 },
     { label: 'Played', value: requests?.filter((r) => r.status === RequestStatus.PLAYED).length ?? 0 },
+    { label: 'Declined', value: requests?.filter((r) => r.status === RequestStatus.DECLINED).length ?? 0 },
   ]
   const djReportTables: { title: string; headers: string[]; rows: (string | number)[][] }[] = []
   if (events?.length) {
     djReportTables.push({
-      title: 'My Events',
-      headers: ['Name', 'Start', 'Status', 'Requests'],
+      title: 'Events (with revenue)',
+      headers: ['Event Name', 'Start', 'Status', 'Requests', 'Tip revenue (RWF)'],
       rows: events.map((e) => [
         e.name,
         new Date(e.startTime).toLocaleDateString(),
         e.status,
-        e.requestCount,
+        e.requestCount ?? 0,
+        (e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0'),
       ]),
     })
   }
   if (requests?.length) {
     djReportTables.push({
-      title: 'Song Requests',
-      headers: ['Song', 'Artist', 'Requester', 'Status'],
-      rows: requests.map((r) => [r.songTitle, r.songArtist ?? '', r.requesterName, r.status]),
+      title: 'Song Requests (detailed)',
+      headers: ['Song', 'Artist', 'Requester', 'Phone', 'Tip (RWF)', 'Status', 'Created', 'Event'],
+      rows: requests.map((r) => [
+        r.songTitle ?? '',
+        r.songArtist ?? '',
+        r.requesterName ?? '',
+        r.payerPhone ?? '',
+        r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
+        r.status,
+        r.createdAt ? new Date(r.createdAt).toLocaleString() : '',
+        r.eventName ?? '',
+      ]),
     })
   }
 
@@ -606,7 +630,7 @@ export default function DjDashboardPage() {
                         <img src={qrCodeUrl} alt="Event QR Code" className="w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-white" />
                         <QRDownload
                           qrDataUrl={qrCodeUrl}
-                          filenameBase={`event-${selectedEvent.id}-qr`}
+                          filenameBase={`${sanitizeEventNameForFile(selectedEvent.name)}-qr-code`}
                           pdfTitle="Event QR Code"
                           pdfSubtitle={selectedEvent.name}
                         />

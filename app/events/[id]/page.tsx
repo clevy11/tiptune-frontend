@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventApi, songRequestApi } from '@/lib/api'
 import { QRDownload } from '@/components/export/QRDownload'
+import { sanitizeEventNameForFile } from '@/lib/utils'
 import { websocketService } from '@/lib/websocket'
 import { getCurrentUserId } from '@/lib/auth'
 import type { SongRequest } from '@/lib/types'
@@ -154,7 +155,7 @@ export default function EventDetailPage() {
                   <img src={qrCodeUrl} alt="Event QR Code" className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-white border border-gray-200" />
                   <QRDownload
                     qrDataUrl={qrCodeUrl}
-                    filenameBase={`event-${eventId}-qr`}
+                    filenameBase={`${sanitizeEventNameForFile(event.name)}-qr-code`}
                     pdfTitle="Event QR Code"
                     pdfSubtitle={event.name}
                   />

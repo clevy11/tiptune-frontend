@@ -16,13 +16,21 @@ interface MusicResultItemProps {
 export function MusicResultItem({ result, onSelect, isSelected }: MusicResultItemProps) {
   const artworkUrl = musicApi.getArtworkUrl(result.artworkUrl100, 100)
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onSelect(result)
+  }
+
   return (
     <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02, x: 4 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => onSelect(result)}
+      onMouseDown={handleMouseDown}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(result) } }}
       className={cn(
         'glass rounded-lg p-3 cursor-pointer transition-all duration-300',
         'hover:bg-white/10 hover:glow-purple',

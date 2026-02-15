@@ -147,16 +147,40 @@ export default function AdminDashboardPage() {
   }
 
   const adminReportSummary = [
+    { label: 'Total revenue (RWF)', value: analytics?.totalTipRevenue != null ? Number(analytics.totalTipRevenue).toLocaleString() : '0' },
+    { label: 'Total requests', value: analytics?.totalRequests ?? 0 },
+    { label: 'Total played', value: analytics?.playedRequests ?? 0 },
+    { label: 'Total declined', value: analytics?.declinedRequests ?? 0 },
     { label: 'Total users', value: analytics?.usersPerRole ? Object.values(analytics.usersPerRole).reduce((a, b) => a + b, 0) : 0 },
     { label: 'Total events', value: analytics?.totalEvents ?? 0 },
     { label: 'Active events', value: analytics?.activeEvents ?? 0 },
-    { label: 'Total requests', value: analytics?.totalRequests ?? 0 },
-    { label: 'Platform tip revenue (RWF)', value: analytics?.totalTipRevenue != null ? Number(analytics.totalTipRevenue).toLocaleString() : '0' },
-    { label: 'Pending', value: analytics?.pendingRequests ?? 0 },
-    { label: 'Accepted', value: analytics?.acceptedRequests ?? 0 },
-    { label: 'Played', value: analytics?.playedRequests ?? 0 },
+    { label: 'Pending requests', value: analytics?.pendingRequests ?? 0 },
+    { label: 'Accepted requests', value: analytics?.acceptedRequests ?? 0 },
   ]
   const adminReportTables: { title: string; headers: string[]; rows: (string | number)[][] }[] = []
+  if (analytics?.topDjsByTipRevenue?.length) {
+    adminReportTables.push({
+      title: 'Revenue per DJ',
+      headers: ['DJ Name', 'Email', 'Total revenue (RWF)'],
+      rows: analytics.topDjsByTipRevenue.map((d) => [
+        d.userName,
+        d.userEmail,
+        Number(d.totalTipRevenue || 0).toLocaleString(),
+      ]),
+    })
+  }
+  if (analytics?.eventRevenueRanking?.length) {
+    adminReportTables.push({
+      title: 'Event ranking by revenue',
+      headers: ['Event', 'DJ', 'Revenue (RWF)', 'Tipped requests'],
+      rows: analytics.eventRevenueRanking.map((e) => [
+        e.eventName,
+        e.djName,
+        Number(e.totalTipRevenue || 0).toLocaleString(),
+        e.tippedRequestCount ?? 0,
+      ]),
+    })
+  }
   if (usersData?.content?.length) {
     adminReportTables.push({
       title: 'Users',
@@ -166,7 +190,7 @@ export default function AdminDashboardPage() {
   }
   if (eventsData?.content?.length) {
     adminReportTables.push({
-      title: 'Events',
+      title: 'Events (with revenue)',
       headers: ['ID', 'Name', 'Creator', 'Start', 'Status', 'Tip revenue (RWF)'],
       rows: eventsData.content.map((e) => [
         e.id,
@@ -180,15 +204,17 @@ export default function AdminDashboardPage() {
   }
   if (requestsData?.content?.length) {
     adminReportTables.push({
-      title: 'Requests',
-      headers: ['ID', 'Song', 'Requester', 'Event', 'Status', 'Tip (RWF)'],
+      title: 'Requests (detailed)',
+      headers: ['ID', 'Song', 'User', 'Phone', 'Tip (RWF)', 'Status', 'Created', 'Event'],
       rows: requestsData.content.map((r) => [
         r.id,
         `${r.songTitle ?? ''} - ${r.songArtist ?? ''}`,
         r.userName ?? '',
-        r.eventName ?? '',
-        r.status,
+        r.payerPhone ?? '',
         r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
+        r.status,
+        r.createdAt ? new Date(r.createdAt).toLocaleString() : '',
+        r.eventName ?? '',
       ]),
     })
   }
