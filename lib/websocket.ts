@@ -4,10 +4,25 @@ import type { SongRequest, Notification } from './types'
 
 const WS_URL_DEFAULT = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080/ws'
 
-/** Same host as the page when on mobile (e.g. http://MAC_IP:8080/ws) so WS works without env vars. */
+/** True if hostname looks like a local/dev IP (same-network mobile testing). Must match api.ts logic. */
+function isLocalNetworkHostname(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return true
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    const parts = hostname.split('.').map(Number)
+    if (parts[0] === 192 && parts[1] === 168) return true
+    if (parts[0] === 10) return true
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true
+  }
+  return false
+}
+
+/**
+ * In production use NEXT_PUBLIC_WS_URL (e.g. wss:// or https://). 
+ * Only use same-host:8080/ws when on a local network IP (e.g. phone at http://192.168.1.x:3000).
+ */
 function getEffectiveWsUrl(): string {
   if (typeof window === 'undefined') return WS_URL_DEFAULT
-  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  if (isLocalNetworkHostname(window.location.hostname)) {
     return `http://${window.location.hostname}:8080/ws`
   }
   return WS_URL_DEFAULT
