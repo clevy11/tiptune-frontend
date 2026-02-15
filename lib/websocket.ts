@@ -4,9 +4,15 @@ import type { SongRequest, Notification } from './types'
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8080/ws'
 
+export interface EventRevenuePayload {
+  eventId: number
+  totalTipRevenue: number
+}
+
 class WebSocketService {
   private client: Client | null = null
   private subscribers: Map<string, Set<(data: SongRequest) => void>> = new Map()
+  private revenueSubscribers: Map<string, Set<(data: EventRevenuePayload) => void>> = new Map()
   private notificationSubscribers: Map<string, Set<(data: Notification) => void>> = new Map()
   private subscriptions: Map<string, any> = new Map()
 
@@ -57,18 +63,68 @@ class WebSocketService {
       this.client.deactivate()
       this.client = null
       this.subscribers.clear()
+      this.revenueSubscribers.clear()
     }
   }
 
   private subscribeToTopics() {
-    // Subscribe to all active song request subscriptions
     this.subscribers.forEach((callbacks, topic) => {
       this.subscribe(topic, callbacks)
     })
-    // Subscribe to all active notification subscriptions
+    this.revenueSubscribers.forEach((callbacks, topic) => {
+      this.subscribeRevenue(topic, callbacks)
+    })
     this.notificationSubscribers.forEach((callbacks, topic) => {
       this.subscribeNotification(topic, callbacks)
     })
+  }
+
+  subscribeToEventRevenue(
+    eventId: number,
+    callback: (data: EventRevenuePayload) => void
+  ) {
+    const topic = `/topic/event/${eventId}/revenue`
+    if (!this.revenueSubscribers.has(topic)) {
+      this.revenueSubscribers.set(topic, new Set())
+    }
+    this.revenueSubscribers.get(topic)!.add(callback)
+    if (this.client?.connected || this.client?.active) {
+      this.subscribeRevenue(topic, this.revenueSubscribers.get(topic)!)
+    }
+  }
+
+  unsubscribeFromEventRevenue(eventId: number, callback: (data: EventRevenuePayload) => void) {
+    const topic = `/topic/event/${eventId}/revenue`
+    const callbacks = this.revenueSubscribers.get(topic)
+    if (callbacks) {
+      callbacks.delete(callback)
+      if (callbacks.size === 0) {
+        const sub = this.subscriptions.get(topic)
+        if (sub) {
+          sub.unsubscribe()
+          this.subscriptions.delete(topic)
+        }
+        this.revenueSubscribers.delete(topic)
+      }
+    }
+  }
+
+  private subscribeRevenue(topic: string, callbacks: Set<(data: EventRevenuePayload) => void>) {
+    if (!this.client?.connected && !this.client?.active) return
+    if (this.subscriptions.has(topic)) return
+    try {
+      const subscription = this.client.subscribe(topic, (message: IMessage) => {
+        try {
+          const data: EventRevenuePayload = JSON.parse(message.body)
+          callbacks.forEach((cb) => cb(data))
+        } catch (e) {
+          console.error('Error parsing revenue message:', e)
+        }
+      })
+      this.subscriptions.set(topic, subscription)
+    } catch (e) {
+      console.error(`Error subscribing to ${topic}:`, e)
+    }
   }
 
   subscribeToEventRequests(

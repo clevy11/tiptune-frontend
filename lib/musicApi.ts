@@ -10,9 +10,9 @@ interface SearchParams {
 
 export const musicApi = {
   /**
-   * Search for music using iTunes API
+   * Search for music using iTunes API. Pass signal to cancel in-flight requests.
    */
-  async searchMusic(query: string, limit: number = 20): Promise<MusicSearchResult[]> {
+  async searchMusic(query: string, limit: number = 20, signal?: AbortSignal): Promise<MusicSearchResult[]> {
     if (!query.trim()) {
       return []
     }
@@ -25,7 +25,7 @@ export const musicApi = {
         entity: 'song',
       })
 
-      const response = await fetch(`${ITUNES_API_BASE}?${params.toString()}`)
+      const response = await fetch(`${ITUNES_API_BASE}?${params.toString()}`, { signal })
       
       if (!response.ok) {
         throw new Error(`iTunes API error: ${response.status}`)

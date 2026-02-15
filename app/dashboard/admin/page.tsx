@@ -23,7 +23,8 @@ import {
   Trash2,
   X,
   Check,
-  AlertCircle
+  AlertCircle,
+  DollarSign
 } from 'lucide-react'
 import type { User, AdminEvent, AdminRequest } from '@/lib/types'
 import { Role, EventStatus, RequestStatus } from '@/lib/types'
@@ -46,8 +47,12 @@ interface AnalyticsData {
   acceptedRequests: number
   declinedRequests: number
   playedRequests: number
+  totalTipRevenue?: number
   topDjs: Array<{ userId: number; userName: string; userEmail: string; requestCount: number }>
+  topDjsByTipRevenue?: Array<{ userId: number; userName: string; userEmail: string; totalTipRevenue: number }>
   requestVolume: Array<{ date: string; count: number }>
+  eventRevenueRanking?: Array<{ eventId: number; eventName: string; djId: number; djName: string; totalTipRevenue: number; tippedRequestCount: number }>
+  revenueByDay?: Array<{ date: string; revenue: number }>
 }
 
 export default function AdminDashboardPage() {
@@ -64,6 +69,7 @@ export default function AdminDashboardPage() {
   const [requestStatusFilter, setRequestStatusFilter] = useState<string>('')
   const [dateFrom, setDateFrom] = useState<string>('')
   const [dateTo, setDateTo] = useState<string>('')
+  const [analyticsRange, setAnalyticsRange] = useState<'7' | '30' | '90' | 'custom'>('30')
   
   // Pagination
   const [userPage, setUserPage] = useState(0)
@@ -90,10 +96,19 @@ export default function AdminDashboardPage() {
     }
   }, [mounted, router])
 
-  // Analytics
+  const analyticsDateRange = (() => {
+    const to = new Date()
+    const toStr = to.toISOString().slice(0, 10)
+    if (analyticsRange === 'custom') return { from: dateFrom || undefined, to: dateTo || undefined }
+    const days = analyticsRange === '7' ? 7 : analyticsRange === '90' ? 90 : 30
+    const from = new Date(to)
+    from.setDate(from.getDate() - days)
+    return { from: from.toISOString().slice(0, 10), to: toStr }
+  })()
+
   const { data: analytics, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
-    queryKey: ['admin-analytics', dateFrom, dateTo],
-    queryFn: () => adminApi.getAnalytics(dateFrom || undefined, dateTo || undefined),
+    queryKey: ['admin-analytics', analyticsDateRange.from, analyticsDateRange.to],
+    queryFn: () => adminApi.getAnalytics(analyticsDateRange.from, analyticsDateRange.to),
     enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -136,6 +151,7 @@ export default function AdminDashboardPage() {
     { label: 'Total events', value: analytics?.totalEvents ?? 0 },
     { label: 'Active events', value: analytics?.activeEvents ?? 0 },
     { label: 'Total requests', value: analytics?.totalRequests ?? 0 },
+    { label: 'Platform tip revenue (RWF)', value: analytics?.totalTipRevenue != null ? Number(analytics.totalTipRevenue).toLocaleString() : '0' },
     { label: 'Pending', value: analytics?.pendingRequests ?? 0 },
     { label: 'Accepted', value: analytics?.acceptedRequests ?? 0 },
     { label: 'Played', value: analytics?.playedRequests ?? 0 },
@@ -151,26 +167,28 @@ export default function AdminDashboardPage() {
   if (eventsData?.content?.length) {
     adminReportTables.push({
       title: 'Events',
-      headers: ['ID', 'Name', 'Creator', 'Start', 'Status'],
+      headers: ['ID', 'Name', 'Creator', 'Start', 'Status', 'Tip revenue (RWF)'],
       rows: eventsData.content.map((e) => [
         e.id,
         e.name,
         e.creatorName ?? '',
         new Date(e.startTime).toLocaleDateString(),
         e.status,
+        e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0',
       ]),
     })
   }
   if (requestsData?.content?.length) {
     adminReportTables.push({
       title: 'Requests',
-      headers: ['ID', 'Song', 'Requester', 'Event', 'Status'],
+      headers: ['ID', 'Song', 'Requester', 'Event', 'Status', 'Tip (RWF)'],
       rows: requestsData.content.map((r) => [
         r.id,
         `${r.songTitle ?? ''} - ${r.songArtist ?? ''}`,
         r.userName ?? '',
         r.eventName ?? '',
         r.status,
+        r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
       ]),
     })
   }
@@ -255,8 +273,45 @@ export default function AdminDashboardPage() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-400">Analytics period:</span>
+              {(['7', '30', '90'] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setAnalyticsRange(d)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${analyticsRange === d ? 'bg-purple-500/30 text-purple-200' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                >
+                  {d === '7' ? 'Last 7 days' : d === '30' ? 'Last 30 days' : 'Last 90 days'}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setAnalyticsRange('custom')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${analyticsRange === 'custom' ? 'bg-purple-500/30 text-purple-200' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+              >
+                Custom
+              </button>
+              {analyticsRange === 'custom' && (
+                <span className="flex items-center gap-2 text-sm text-gray-400">
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white"
+                  />
+                  to
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white"
+                  />
+                </span>
+              )}
+            </div>
             {/* Analytics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <GlassCard glow="purple">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -290,6 +345,20 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-400">Total Requests</p>
+                </div>
+              </GlassCard>
+
+              <GlassCard glow="green">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <DollarSign className="w-8 h-8 text-green-400" />
+                    <span className="text-xl font-bold text-green-300">
+                      {analytics?.totalTipRevenue != null
+                        ? Number(analytics.totalTipRevenue).toLocaleString()
+                        : '0'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400">Platform tip revenue (RWF)</p>
                 </div>
               </GlassCard>
 
@@ -352,7 +421,7 @@ export default function AdminDashboardPage() {
               </div>
             </GlassCard>
 
-            {/* Top DJs */}
+            {/* Top DJs by Requests */}
             {analytics?.topDjs && analytics.topDjs.length > 0 && (
               <GlassCard glow="blue">
                 <h3 className="text-xl font-bold mb-4 text-gradient">Top DJs by Requests</h3>
@@ -371,6 +440,88 @@ export default function AdminDashboardPage() {
                       <div className="text-purple-300 font-bold">{dj.requestCount} requests</div>
                     </div>
                   ))}
+                </div>
+              </GlassCard>
+            )}
+
+            {/* Top DJs by Tip Revenue */}
+            {analytics?.topDjsByTipRevenue && analytics.topDjsByTipRevenue.length > 0 && (
+              <GlassCard glow="green">
+                <h3 className="text-xl font-bold mb-4 text-gradient">Revenue per DJ (Top Earning DJs)</h3>
+                <div className="space-y-3">
+                  {analytics.topDjsByTipRevenue.map((dj, idx) => (
+                    <div key={dj.userId} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-200">{dj.userName}</div>
+                          <div className="text-sm text-gray-400">{dj.userEmail}</div>
+                        </div>
+                      </div>
+                      <div className="text-green-300 font-bold">
+                        {Number(dj.totalTipRevenue || 0).toLocaleString()} RWF
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
+            )}
+
+            {/* Event revenue ranking (highest tipping events) */}
+            {analytics?.eventRevenueRanking && analytics.eventRevenueRanking.length > 0 && (
+              <GlassCard glow="blue">
+                <h3 className="text-xl font-bold mb-4 text-gradient">Event Performance Ranking (by Tip Revenue)</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-400 border-b border-white/10">
+                        <th className="py-2 pr-4">#</th>
+                        <th className="py-2 pr-4">Event</th>
+                        <th className="py-2 pr-4">DJ</th>
+                        <th className="py-2 pr-4 text-right">Revenue (RWF)</th>
+                        <th className="py-2 text-right">Tipped requests</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analytics.eventRevenueRanking.map((ev, idx) => (
+                        <tr key={ev.eventId} className="border-b border-white/5">
+                          <td className="py-2 pr-4 text-gray-400">{idx + 1}</td>
+                          <td className="py-2 pr-4 font-medium text-gray-200">{ev.eventName}</td>
+                          <td className="py-2 pr-4 text-gray-300">{ev.djName}</td>
+                          <td className="py-2 pr-4 text-right text-green-400 font-medium">{Number(ev.totalTipRevenue || 0).toLocaleString()}</td>
+                          <td className="py-2 text-right text-gray-400">{ev.tippedRequestCount ?? 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </GlassCard>
+            )}
+
+            {/* Revenue over time (simple chart) */}
+            {analytics?.revenueByDay && analytics.revenueByDay.length > 0 && (
+              <GlassCard glow="green">
+                <h3 className="text-xl font-bold mb-4 text-gradient">Tip Revenue Over Time</h3>
+                <div className="flex items-end gap-1 h-40">
+                  {analytics.revenueByDay.map((d) => {
+                    const max = Math.max(...analytics.revenueByDay!.map((x) => Number(x.revenue || 0)), 1)
+                    const h = (Number(d.revenue) / max) * 100
+                    return (
+                      <div
+                        key={d.date}
+                        className="flex-1 min-w-0 flex flex-col items-center gap-1"
+                        title={`${d.date}: ${Number(d.revenue).toLocaleString()} RWF`}
+                      >
+                        <div
+                          className="w-full bg-green-500/50 rounded-t min-h-[4px] transition-all"
+                          style={{ height: `${Math.max(h, 2)}%` }}
+                        />
+                        <span className="text-xs text-gray-500 truncate w-full text-center">{d.date.slice(5)}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </GlassCard>
             )}

@@ -10,7 +10,7 @@ import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Music, Send, CheckCircle2, Sparkles, Clock, Home } from 'lucide-react'
+import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone } from 'lucide-react'
 import type { Event, PublicSongRequestCreateRequest, MusicSearchResult } from '@/lib/types'
 import { MusicSearchInput } from '@/components/music/MusicSearchInput'
 
@@ -23,10 +23,15 @@ export default function PublicEventPage() {
     songArtist: '',
     songAlbum: '',
     message: '',
+    wantToTip: false as boolean,
+    tipAmount: '' as string,
+    payerName: '',
+    payerPhone: '',
   })
   const [selectedSong, setSelectedSong] = useState<MusicSearchResult | null>(null)
   const [success, setSuccess] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [tipError, setTipError] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -64,8 +69,18 @@ export default function PublicEventPage() {
       songRequestApi.createPublic(data),
     onSuccess: () => {
       setSuccess(true)
-      setFormData({ songTitle: '', songArtist: '', songAlbum: '', message: '' })
+      setFormData({
+        songTitle: '',
+        songArtist: '',
+        songAlbum: '',
+        message: '',
+        wantToTip: false,
+        tipAmount: '',
+        payerName: '',
+        payerPhone: '',
+      })
       setSelectedSong(null)
+      setTipError(null)
       queryClient.invalidateQueries({ queryKey: ['requests', accessToken] })
       setTimeout(() => setSuccess(false), 3000)
     },
@@ -87,17 +102,31 @@ export default function PublicEventPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setTipError(null)
     if (!event || !accessToken) {
       console.error('Cannot submit: event or accessToken is missing')
       return
     }
-
+    const wantToTip = formData.wantToTip
+    let tipAmount: number | undefined
+    if (wantToTip) {
+      const parsed = Number(formData.tipAmount)
+      if (!Number.isFinite(parsed) || parsed < 1 || parsed > 500_000) {
+        setTipError('Tip amount must be between 1 and 500,000 RWF')
+        return
+      }
+      tipAmount = parsed
+    }
     createMutation.mutate({
       accessToken: event.accessToken as string,
       songTitle: formData.songTitle,
       songArtist: formData.songArtist,
       songAlbum: formData.songAlbum || undefined,
       message: formData.message || undefined,
+      wantToTip: wantToTip || undefined,
+      tipAmount,
+      payerName: formData.payerName?.trim() || undefined,
+      payerPhone: formData.payerPhone?.trim() || undefined,
     })
   }
 
@@ -320,6 +349,116 @@ export default function PublicEventPage() {
                     className="w-full"
                   />
                 </motion.div>
+
+                {/* Optional tip */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.05 }}
+                  className="space-y-3 pt-2 border-t border-white/10"
+                >
+                  <p className="block text-sm font-medium text-gray-300 mb-2">
+                    Would you like to tip the DJ?
+                  </p>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="wantToTip"
+                        checked={formData.wantToTip === true}
+                        onChange={() => setFormData({ ...formData, wantToTip: true })}
+                        className="rounded-full border-white/30 bg-white/5"
+                      />
+                      <span className="text-gray-300">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="wantToTip"
+                        checked={formData.wantToTip === false}
+                        onChange={() => setFormData({ ...formData, wantToTip: false, tipAmount: '', payerName: '', payerPhone: '' })}
+                        className="rounded-full border-white/30 bg-white/5"
+                      />
+                      <span className="text-gray-300">No</span>
+                    </label>
+                  </div>
+                  {formData.wantToTip && (
+                    <div className="space-y-3 pl-2 border-l-2 border-pink-500/50">
+                      {event.djMomoCode && (
+                        <div className="rounded-lg bg-white/10 border border-pink-500/30 p-4">
+                          <p className="text-sm font-medium text-gray-300 mb-1">MoMo Payment Code</p>
+                          <p className="font-mono text-lg text-pink-300 break-all tracking-wide">
+                            *182*8*1*{event.djMomoCode}*{'{amount}'}#
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2">Dial this on your phone and replace {'{amount}'} with your tip in RWF.</p>
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={500000}
+                          placeholder="e.g. 5000"
+                          value={formData.tipAmount}
+                          onChange={(e) => {
+                            setFormData({ ...formData, tipAmount: e.target.value })
+                            setTipError(null)
+                          }}
+                          className="w-full"
+                        />
+                      </div>
+                      {/* Pay with MoMo: tel link uses server-provided djMomoCode only; amount sanitized 1–500000 */}
+                      {event.djMomoCode && formData.tipAmount && (() => {
+                        const raw = Number(formData.tipAmount)
+                        const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
+                        const ussd = `*182*8*1*${event.djMomoCode}*${safeAmount}#`
+                        const telUrl = `tel:${ussd}`
+                        const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                        return (
+                          <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">
+                            <p className="text-xs text-gray-400 mb-2">Then pay with MoMo</p>
+                            <a
+                              href={telUrl}
+                              className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation"
+                            >
+                              <Smartphone className="w-5 h-5" />
+                              Pay with MoMo — {safeAmount.toLocaleString()} RWF
+                            </a>
+                            {!isMobile && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                On desktop: dial <span className="font-mono text-gray-400">{ussd}</span> on your phone.
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })()}
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
+                        <Input
+                          placeholder="Payer name"
+                          value={formData.payerName}
+                          onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+                        <Input
+                          type="tel"
+                          placeholder="Phone number"
+                          value={formData.payerPhone}
+                          onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {tipError && (
+                    <p className="text-sm text-red-400" role="alert">{tipError}</p>
+                  )}
+                </motion.div>
+
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -367,17 +506,23 @@ export default function PublicEventPage() {
                         transition={{ delay: 1.3 + index * 0.1 }}
                         className="glass rounded-lg p-4"
                       >
-                        <div className="flex justify-between items-center">
-                          <div className="flex-1">
+                        <div className="flex justify-between items-center gap-2">
+                          <div className="flex-1 min-w-0">
                             <p className="font-medium">
                               {request.song.title} - {request.song.artist}
+                              {(Number(request.tipAmount) || 0) > 0 && (
+                                <span className="ml-2 inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">
+                                  <DollarSign className="w-3 h-3" />
+                                  {Number(request.tipAmount).toLocaleString()} RWF
+                                </span>
+                              )}
                             </p>
                             {request.message && (
                               <p className="text-sm text-gray-400 mt-1">{request.message}</p>
                             )}
                           </div>
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
                               request.status === 'ACCEPTED'
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/50'
                                 : request.status === 'DECLINED'

@@ -150,8 +150,16 @@ export const djApi = {
     return response.data
   },
 
-  getEventRequests: async (eventId: number): Promise<DjSongRequest[]> => {
-    const response = await api.get<DjSongRequest[]>(`/dj/events/${eventId}/requests`)
+  getEventRequests: async (
+    eventId: number,
+    params?: { filter?: string; sort?: string }
+  ): Promise<DjSongRequest[]> => {
+    const searchParams = new URLSearchParams()
+    if (params?.filter) searchParams.set('filter', params.filter)
+    if (params?.sort) searchParams.set('sort', params.sort)
+    const q = searchParams.toString()
+    const url = q ? `/dj/events/${eventId}/requests?${q}` : `/dj/events/${eventId}/requests`
+    const response = await api.get<DjSongRequest[]>(url)
     return response.data
   },
 

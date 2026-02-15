@@ -33,6 +33,7 @@ export interface Event {
   endTime: string
   status: EventStatus
   createdBy: User
+  djMomoCode?: string
 }
 
 // DJ-specific types
@@ -46,6 +47,7 @@ export interface DjEvent {
   status: EventStatus
   requestCount: number
   pendingRequestCount: number
+  totalTipRevenue?: number | string
 }
 
 export interface DjSongRequest {
@@ -54,6 +56,9 @@ export interface DjSongRequest {
   songArtist: string
   songAlbum?: string
   message?: string
+  tipAmount?: number | string
+  payerName?: string
+  payerPhone?: string
   status: RequestStatus
   createdAt: string
   requesterName: string
@@ -74,6 +79,7 @@ export interface AdminEvent {
   creatorName: string
   creatorEmail: string
   requestCount: number
+  totalTipRevenue?: number | string
 }
 
 export interface AdminRequest {
@@ -82,6 +88,9 @@ export interface AdminRequest {
   songArtist: string
   songAlbum?: string
   message?: string
+  tipAmount?: number | string
+  payerName?: string
+  payerPhone?: string
   status: RequestStatus
   createdAt: string
   userId: number
@@ -117,6 +126,9 @@ export interface SongRequest {
   event: Event
   song: Song
   message?: string
+  tipAmount?: number | string
+  payerName?: string
+  payerPhone?: string
   status: RequestStatus
   createdAt: string
 }
@@ -141,6 +153,8 @@ export interface RegisterRequest {
 export interface EventRequest {
   name: string
   description?: string
+  /** MoMo Payment Code: 4–10 digits for USSD *182*8*1*{code}*{amount}# */
+  momoCode: string
   startTime: string
   endTime: string
   status: EventStatus
@@ -160,6 +174,10 @@ export interface PublicSongRequestCreateRequest {
   songArtist: string
   songAlbum?: string
   message?: string
+  wantToTip?: boolean
+  tipAmount?: number
+  payerName?: string
+  payerPhone?: string
 }
 
 // Notification types
