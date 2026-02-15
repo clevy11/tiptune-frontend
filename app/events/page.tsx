@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
 import { Music } from 'lucide-react'
 import type { Event } from '@/lib/types'
+import { formatInRwanda } from '@/lib/utils'
 
 export default function EventsPage() {
   const { data: events, isLoading, isError, error } = useQuery<Event[]>({
@@ -109,8 +110,8 @@ export default function EventsPage() {
                     )}
                     <div className="text-sm text-gray-400">
                       <p>
-                        {new Date(event.startTime).toLocaleString()} -{' '}
-                        {new Date(event.endTime).toLocaleString()}
+                        {formatInRwanda(event.startTime)} -{' '}
+                        {formatInRwanda(event.endTime)}
                       </p>
                       <p className="mt-1">By: {event.createdBy.name}</p>
                     </div>

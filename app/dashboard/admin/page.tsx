@@ -36,6 +36,8 @@ import { getApiErrorMessage } from '@/lib/apiClient'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { ReportExport } from '@/components/export/ReportExport'
 import { ResponsiveTable } from '@/components/ui/ResponsiveTable'
+import { DatePicker } from '@/components/ui/DatePicker'
+import { formatInRwanda, formatDateInRwanda } from '@/lib/utils'
 
 interface AnalyticsData {
   usersPerRole: Record<string, number>
@@ -196,7 +198,7 @@ export default function AdminDashboardPage() {
         e.id,
         e.name,
         e.creatorName ?? '',
-        new Date(e.startTime).toLocaleDateString(),
+        formatDateInRwanda(e.startTime),
         e.status,
         e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0',
       ]),
@@ -213,7 +215,7 @@ export default function AdminDashboardPage() {
         r.payerPhone ?? '',
         r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
         r.status,
-        r.createdAt ? new Date(r.createdAt).toLocaleString() : '',
+        r.createdAt ? formatInRwanda(r.createdAt) : '',
         r.eventName ?? '',
       ]),
     })
@@ -319,19 +321,19 @@ export default function AdminDashboardPage() {
                 Custom
               </button>
               {analyticsRange === 'custom' && (
-                <span className="flex items-center gap-2 text-sm text-gray-400">
-                  <input
-                    type="date"
+                <span className="flex flex-wrap items-center gap-2 text-sm text-gray-400">
+                  <DatePicker
                     value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white"
+                    onChange={setDateFrom}
+                    placeholder="From"
+                    className="w-40"
                   />
-                  to
-                  <input
-                    type="date"
+                  <span>to</span>
+                  <DatePicker
                     value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white"
+                    onChange={setDateTo}
+                    placeholder="To"
+                    className="w-40"
                   />
                 </span>
               )}
@@ -664,7 +666,7 @@ export default function AdminDashboardPage() {
                       { key: 'id', header: 'ID', render: (e) => e.id },
                       { key: 'name', header: 'Name', render: (e) => e.name },
                       { key: 'creator', header: 'Creator', render: (e) => e.creatorName ?? 'N/A' },
-                      { key: 'start', header: 'Start', render: (e) => new Date(e.startTime).toLocaleDateString() },
+                      { key: 'start', header: 'Start', render: (e) => formatDateInRwanda(e.startTime) },
                       {
                         key: 'status',
                         header: 'Status',

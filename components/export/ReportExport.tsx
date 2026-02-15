@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Button } from '@/components/ui/button'
 import { FileText, Table } from 'lucide-react'
+import { formatInRwanda } from '@/lib/utils'
 
 export interface ReportTable {
   title: string
@@ -37,7 +38,7 @@ export function ReportExport({
 }: ReportExportProps) {
   const [loading, setLoading] = useState<'csv' | 'pdf' | null>(null)
 
-  const generatedAt = new Date().toLocaleString()
+  const generatedAt = formatInRwanda(new Date())
 
   const handleExportCsv = useCallback(() => {
     setLoading('csv')

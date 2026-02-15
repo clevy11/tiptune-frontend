@@ -42,6 +42,27 @@
   }
 }
 
+/* Modern date/time picker (react-day-picker) dark theme */
+.rdpm .rdp,
+.rdp-modern,
+[data-rdp] {
+  --rdp-accent-color: rgb(124 58 237);
+  --rdp-background-color: rgb(255 255 255 / 0.1);
+  --rdp-accent-color-dark: rgb(124 58 237);
+  --rdp-background-color-dark: rgb(255 255 255 / 0.15);
+  --rdp-selected-color: #fff;
+}
+
+/* Ensure full calendar grid is visible (no clipping of bottom rows) */
+#datetime-picker-portal .rdp,
+#datetime-picker-portal .rdp-months,
+#datetime-picker-portal .rdp-month {
+  overflow: visible !important;
+}
+#datetime-picker-portal .rdp-table {
+  width: 100%;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventApi, songRequestApi } from '@/lib/api'
 import { QRDownload } from '@/components/export/QRDownload'
-import { sanitizeEventNameForFile } from '@/lib/utils'
+import { sanitizeEventNameForFile, formatInRwanda } from '@/lib/utils'
 import { websocketService } from '@/lib/websocket'
 import { getCurrentUserId } from '@/lib/auth'
 import type { SongRequest } from '@/lib/types'
@@ -139,8 +139,8 @@ export default function EventDetailPage() {
               )}
               <div className="text-xs sm:text-sm text-gray-500">
                 <p>
-                  {new Date(event.startTime).toLocaleString()} -{' '}
-                  {new Date(event.endTime).toLocaleString()}
+                  {formatInRwanda(event.startTime)} -{' '}
+                  {formatInRwanda(event.endTime)}
                 </p>
                 <p className="mt-1">By: {event.createdBy.name}</p>
               </div>
@@ -201,7 +201,7 @@ export default function EventDetailPage() {
                       )}
                       <p className="text-xs text-gray-400 mt-1">
                         Requested by: {request.user.name} •{' '}
-                        {new Date(request.createdAt).toLocaleString()}
+                        {formatInRwanda(request.createdAt)}
                       </p>
                     </div>
                     <span

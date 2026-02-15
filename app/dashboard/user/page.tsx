@@ -18,6 +18,7 @@ import { Role } from '@/lib/types'
 import { getCurrentUser } from '@/lib/auth'
 import { shouldRedirect } from '@/lib/roleGuard'
 import { useMounted } from '@/hooks/useMounted'
+import { formatDateInRwanda, formatTimeInRwanda } from '@/lib/utils'
 
 export default function UserDashboardPage() {
   const router = useRouter()
@@ -201,11 +202,11 @@ export default function UserDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-400">
                         <Calendar className="w-4 h-4" />
-                        <span>{new Date(event.startTime).toLocaleDateString()}</span>
+                        <span>{formatDateInRwanda(event.startTime)}</span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(event.startTime).toLocaleTimeString()} -{' '}
-                        {new Date(event.endTime).toLocaleTimeString()}
+                        {formatTimeInRwanda(event.startTime)} -{' '}
+                        {formatTimeInRwanda(event.endTime)}
                       </div>
                     </div>
                   </div>

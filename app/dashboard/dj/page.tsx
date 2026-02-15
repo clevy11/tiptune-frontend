@@ -25,8 +25,9 @@ import { useMounted } from '@/hooks/useMounted'
 import { getApiErrorMessage } from '@/lib/apiClient'
 import { ErrorMessage, FieldErrorWrapper } from '@/components/ui/ErrorMessage'
 import { MobileDrawer } from '@/components/ui/MobileDrawer'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { QRDownload } from '@/components/export/QRDownload'
-import { sanitizeEventNameForFile } from '@/lib/utils'
+import { sanitizeEventNameForFile, formatInRwanda, formatDateInRwanda } from '@/lib/utils'
 import { ReportExport } from '@/components/export/ReportExport'
 
 export default function DjDashboardPage() {
@@ -306,7 +307,7 @@ export default function DjDashboardPage() {
       headers: ['Event Name', 'Start', 'Status', 'Requests', 'Tip revenue (RWF)'],
       rows: events.map((e) => [
         e.name,
-        new Date(e.startTime).toLocaleDateString(),
+        formatDateInRwanda(e.startTime),
         e.status,
         e.requestCount ?? 0,
         (e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0'),
@@ -324,7 +325,7 @@ export default function DjDashboardPage() {
         r.payerPhone ?? '',
         r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
         r.status,
-        r.createdAt ? new Date(r.createdAt).toLocaleString() : '',
+        r.createdAt ? formatInRwanda(r.createdAt) : '',
         r.eventName ?? '',
       ]),
     })
@@ -486,16 +487,14 @@ export default function DjDashboardPage() {
                         }
                         fieldId="startTime"
                       >
-                        <Input
+                        <DateTimePicker
                           id="startTime"
-                          type="datetime-local"
-                          placeholder="Start Time *"
+                          placeholder="Start date & time *"
                           value={newEvent.startTime}
-                          onChange={(e) => {
-                            setNewEvent({ ...newEvent, startTime: e.target.value })
+                          onChange={(v) => {
+                            setNewEvent({ ...newEvent, startTime: v })
                             setCreateEventError(null)
                           }}
-                          required
                         />
                       </FieldErrorWrapper>
                       <FieldErrorWrapper
@@ -506,16 +505,14 @@ export default function DjDashboardPage() {
                         }
                         fieldId="endTime"
                       >
-                        <Input
+                        <DateTimePicker
                           id="endTime"
-                          type="datetime-local"
-                          placeholder="End Time *"
+                          placeholder="End date & time *"
                           value={newEvent.endTime}
-                          onChange={(e) => {
-                            setNewEvent({ ...newEvent, endTime: e.target.value })
+                          onChange={(v) => {
+                            setNewEvent({ ...newEvent, endTime: v })
                             setCreateEventError(null)
                           }}
-                          required
                         />
                       </FieldErrorWrapper>
                     </div>
@@ -620,8 +617,8 @@ export default function DjDashboardPage() {
                         <p className="text-gray-300 mb-2 text-sm sm:text-base">{selectedEvent.description}</p>
                       )}
                       <p className="text-xs sm:text-sm text-gray-400">
-                        {new Date(selectedEvent.startTime).toLocaleString()} -{' '}
-                        {new Date(selectedEvent.endTime).toLocaleString()}
+                        {formatInRwanda(selectedEvent.startTime)} -{' '}
+                        {formatInRwanda(selectedEvent.endTime)}
                       </p>
                     </div>
                     {qrCodeUrl && (
@@ -815,7 +812,7 @@ export default function DjDashboardPage() {
                               </p>
                               <p className="text-xs text-gray-500 mt-0.5">
                                 {selectedEvent?.name && <span>{selectedEvent.name} · </span>}
-                                {request.createdAt && new Date(request.createdAt).toLocaleString()}
+                                {request.createdAt && formatInRwanda(request.createdAt)}
                               </p>
                             </div>
                             <span
@@ -988,7 +985,7 @@ export default function DjDashboardPage() {
                             <p className="text-xs text-gray-500 mt-1">
                               {request.requesterName}
                               {request.payerPhone && ` · ${request.payerPhone}`}
-                              {' · '}{request.createdAt && new Date(request.createdAt).toLocaleString()}
+                              {' · '}{request.createdAt && formatInRwanda(request.createdAt)}
                             </p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${

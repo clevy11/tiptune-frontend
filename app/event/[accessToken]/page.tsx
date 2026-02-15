@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone } from 'lucide-react'
 import type { Event, PublicSongRequestCreateRequest, MusicSearchResult } from '@/lib/types'
 import { MusicSearchInput } from '@/components/music/MusicSearchInput'
+import { formatInRwanda } from '@/lib/utils'
 
 export default function PublicEventPage() {
   const params = useParams()
@@ -242,8 +243,8 @@ export default function PublicEventPage() {
             >
               <Clock className="w-4 h-4" />
               <span>
-                {new Date(event.startTime).toLocaleString()} -{' '}
-                {new Date(event.endTime).toLocaleString()}
+                {formatInRwanda(event.startTime)} -{' '}
+                {formatInRwanda(event.endTime)}
               </span>
             </motion.div>
           </GlassCard>

@@ -7,7 +7,7 @@ import { useNotificationStore } from '@/store/notificationStore'
 import { songRequestApi } from '@/lib/api'
 import type { Notification } from '@/lib/types'
 import { RequestStatus } from '@/lib/types'
-import { cn } from '@/lib/utils'
+import { cn, formatTimeInRwanda } from '@/lib/utils'
 import { GlowButton } from '@/components/GlowButton'
 
 interface NotificationItemProps {
@@ -120,7 +120,7 @@ export function NotificationItem({ notification, index }: NotificationItemProps)
             </>
           )}
           <p className="text-xs text-gray-500 mt-1">
-            {new Date(notification.createdAt).toLocaleTimeString()}
+            {formatTimeInRwanda(notification.createdAt)}
           </p>
 
           {/* Accept / Decline — only for pending song requests; remove only when action taken */}
