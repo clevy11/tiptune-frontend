@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,7 +13,7 @@ import { GlowButton } from '@/components/GlowButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react'
+import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle } from 'lucide-react'
 import type { DjEvent, DjSongRequest, EventRequest, Notification } from '@/lib/types'
 import { EventStatus, RequestStatus, Role } from '@/lib/types'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
@@ -30,12 +30,197 @@ import { QRDownload } from '@/components/export/QRDownload'
 import { sanitizeEventNameForFile, formatInRwanda, formatDateInRwanda } from '@/lib/utils'
 import { ReportExport } from '@/components/export/ReportExport'
 
+// Memoized EventCard to prevent unnecessary re-renders
+const EventCard = memo(({ 
+  event, 
+  isSelected, 
+  onSelect, 
+  onEdit, 
+  onDelete, 
+  onEnd,
+  isDeleting,
+  isEnding
+}: { 
+  event: DjEvent
+  isSelected: boolean
+  onSelect: () => void
+  onEdit: () => void
+  onDelete: () => void
+  onEnd: () => void
+  isDeleting: boolean
+  isEnding: boolean
+}) => (
+  <motion.div
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    whileHover={{ scale: 1.02 }}
+    className={`
+      glass rounded-lg p-4 transition-all
+      ${isSelected ? 'border-2 border-purple-500 glow-purple' : ''}
+      ${event.status === EventStatus.ENDED ? 'opacity-75' : ''}
+    `}
+  >
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex-1">
+        <h3 
+          className="font-semibold cursor-pointer flex items-center gap-2"
+          onClick={onSelect}
+        >
+          {event.name}
+          {event.status === EventStatus.ENDED && (
+            <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-xs font-normal">
+              Ended
+            </span>
+          )}
+        </h3>
+      </div>
+      <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+        {event.status === EventStatus.ACTIVE && (
+          <button
+            type="button"
+            onClick={onEnd}
+            disabled={isEnding}
+            className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-orange-400 transition-colors disabled:opacity-50"
+            aria-label="End event"
+          >
+            <StopCircle className="w-4 h-4" />
+          </button>
+        )}
+        {event.status === EventStatus.ACTIVE && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-purple-400 transition-colors"
+            aria-label="Edit event"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={isDeleting}
+          className="p-1.5 rounded hover:bg-white/10 text-gray-400 hover:text-red-400 transition-colors disabled:opacity-50"
+          aria-label="Delete event"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+    <div 
+      className="flex items-center justify-between text-sm text-gray-400 cursor-pointer"
+      onClick={onSelect}
+    >
+      <span>{event.requestCount} requests</span>
+      {event.pendingRequestCount > 0 && (
+        <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs">
+          {event.pendingRequestCount} pending
+        </span>
+      )}
+    </div>
+  </motion.div>
+))
+EventCard.displayName = 'EventCard'
+
+// Memoized MobileEventItem to prevent unnecessary re-renders
+const MobileEventItem = memo(({ 
+  event, 
+  isSelected, 
+  onSelect, 
+  onEdit, 
+  onDelete, 
+  onEnd,
+  isDeleting,
+  isEnding,
+  onCloseMenu
+}: { 
+  event: DjEvent
+  isSelected: boolean
+  onSelect: () => void
+  onEdit: () => void
+  onDelete: () => void
+  onEnd: () => void
+  isDeleting: boolean
+  isEnding: boolean
+  onCloseMenu: () => void
+}) => (
+  <div
+    className={`w-full rounded-lg p-4 transition-all min-h-[44px] touch-manipulation ${
+      isSelected ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-white/5 border border-white/10'
+    } ${event.status === EventStatus.ENDED ? 'opacity-75' : ''}`}
+  >
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <button
+        type="button"
+        onClick={() => {
+          onSelect()
+          onCloseMenu()
+        }}
+        className="flex-1 text-left"
+      >
+        <span className="font-medium text-white block flex items-center gap-2">
+          {event.name}
+          {event.status === EventStatus.ENDED && (
+            <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-xs font-normal">
+              Ended
+            </span>
+          )}
+        </span>
+        <span className="text-sm text-gray-400">{event.requestCount} requests</span>
+      </button>
+      <div className="flex gap-1 shrink-0">
+        {event.status === EventStatus.ACTIVE && (
+          <button
+            type="button"
+            onClick={() => {
+              onEnd()
+              onCloseMenu()
+            }}
+            disabled={isEnding}
+            className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-orange-400 transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            aria-label="End event"
+          >
+            <StopCircle className="w-4 h-4" />
+          </button>
+        )}
+        {event.status === EventStatus.ACTIVE && (
+          <button
+            type="button"
+            onClick={() => {
+              onEdit()
+              onCloseMenu()
+            }}
+            className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-purple-400 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            aria-label="Edit event"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            onDelete()
+            onCloseMenu()
+          }}
+          disabled={isDeleting}
+          className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-red-400 transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+          aria-label="Delete event"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  </div>
+))
+MobileEventItem.displayName = 'MobileEventItem'
+
 export default function DjDashboardPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const mounted = useMounted()
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [createEventError, setCreateEventError] = useState<string | null>(null)
@@ -82,7 +267,10 @@ export default function DjDashboardPage() {
     gcTime: 10 * 60 * 1000,
   })
 
-  const apiFilter = requestTab === 'played' ? 'played' : (requestFilter === 'all' ? 'active' : requestFilter)
+  const apiFilter = useMemo(
+    () => requestTab === 'played' ? 'played' : (requestFilter === 'all' ? 'active' : requestFilter),
+    [requestTab, requestFilter]
+  )
 
   useEffect(() => {
     setRequestsDisplayCount(25)
@@ -227,6 +415,43 @@ export default function DjDashboardPage() {
     },
   })
 
+  const updateEventMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: EventRequest }) => djApi.updateEvent(id, data),
+    onSuccess: () => {
+      setEditingEventId(null)
+      queryClient.invalidateQueries({ queryKey: ['dj-events'] })
+      queryClient.invalidateQueries({ queryKey: ['dj-event', editingEventId] })
+    },
+    onError: (error: unknown) => {
+      setCreateEventError(getApiErrorMessage(error))
+    },
+  })
+
+  const deleteEventMutation = useMutation({
+    mutationFn: (id: number) => djApi.deleteEvent(id),
+    onSuccess: () => {
+      if (selectedEventId === editingEventId) {
+        setSelectedEventId(null)
+      }
+      setEditingEventId(null)
+      queryClient.invalidateQueries({ queryKey: ['dj-events'] })
+    },
+    onError: (error: unknown) => {
+      setCreateEventError(getApiErrorMessage(error))
+    },
+  })
+
+  const endEventMutation = useMutation({
+    mutationFn: (id: number) => djApi.endEvent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dj-events'] })
+      queryClient.invalidateQueries({ queryKey: ['dj-event', selectedEventId] })
+    },
+    onError: (error: unknown) => {
+      setCreateEventError(getApiErrorMessage(error))
+    },
+  })
+
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault()
     setCreateEventError(null)
@@ -253,14 +478,143 @@ export default function DjDashboardPage() {
     createEventMutation.mutate({ ...newEvent, momoCode: code })
   }
 
-  const handleStatusUpdate = (id: number, status: RequestStatus) => {
+  const handleStatusUpdate = useCallback((id: number, status: RequestStatus) => {
     updateStatusMutation.mutate({ id, status })
-  }
+  }, [updateStatusMutation])
 
-  const handleLogout = () => {
+  const handleEditEvent = useCallback(async (event: DjEvent) => {
+    setEditingEventId(event.id)
+    try {
+      // Fetch full event details to get momoCode
+      const fullEvent = await djApi.getEvent(event.id)
+      setNewEvent({
+        name: fullEvent.name,
+        description: fullEvent.description || '',
+        momoCode: fullEvent.momoCode || '',
+        startTime: fullEvent.startTime ? new Date(fullEvent.startTime).toISOString().slice(0, 16) : '',
+        endTime: fullEvent.endTime ? new Date(fullEvent.endTime).toISOString().slice(0, 16) : '',
+        status: fullEvent.status,
+      })
+    } catch (error) {
+      // Fallback to event data we have
+      setNewEvent({
+        name: event.name,
+        description: event.description || '',
+        momoCode: event.momoCode || '',
+        startTime: event.startTime ? new Date(event.startTime).toISOString().slice(0, 16) : '',
+        endTime: event.endTime ? new Date(event.endTime).toISOString().slice(0, 16) : '',
+        status: event.status,
+      })
+    }
+  }, [])
+
+  const handleUpdateEvent = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingEventId) return
+    setCreateEventError(null)
+
+    const code = newEvent.momoCode?.replace(/\D/g, '') ?? ''
+    if (code.length < 4 || code.length > 10) {
+      setCreateEventError('MoMo Payment Code must be 4–10 digits')
+      return
+    }
+
+    const now = new Date()
+    const start = newEvent.startTime ? new Date(newEvent.startTime) : null
+    const end = newEvent.endTime ? new Date(newEvent.endTime) : null
+
+    if (start && start.getTime() < now.getTime()) {
+      setCreateEventError('Start time must be in the present or future')
+      return
+    }
+    if (start && end && end.getTime() <= start.getTime()) {
+      setCreateEventError('End time must be after start time')
+      return
+    }
+
+    updateEventMutation.mutate({ id: editingEventId, data: { ...newEvent, momoCode: code } })
+  }, [editingEventId, newEvent, updateEventMutation])
+
+  const handleDeleteEvent = useCallback((id: number) => {
+    if (confirm('Are you sure you want to delete this event? This will hide it from users, but the data will be preserved.')) {
+      deleteEventMutation.mutate(id)
+    }
+  }, [deleteEventMutation])
+
+  const handleEndEvent = useCallback((id: number) => {
+    if (confirm('Are you sure you want to end this event? It will stop accepting new requests but remain visible on your dashboard.')) {
+      endEventMutation.mutate(id)
+    }
+  }, [endEventMutation])
+
+  const handleLogout = useCallback(() => {
     authApi.logout()
     router.push('/login')
-  }
+  }, [router])
+
+  // All hooks must be called before any early returns (Rules of Hooks)
+  const selectedEvent = useMemo(
+    () => events?.find((e) => e.id === selectedEventId),
+    [events, selectedEventId]
+  )
+
+  const { totalTipRevenue, tippedCount, highestTip, lowestTip, avgTip } = useMemo(() => {
+    const total = events?.reduce((sum, e) => sum + (Number(e.totalTipRevenue) || 0), 0) ?? 0
+    const tipped = requests?.filter((r) => (Number(r.tipAmount) || 0) > 0) ?? []
+    const count = tipped.length
+    const highest = count ? Math.max(...tipped.map((r) => Number(r.tipAmount) || 0)) : 0
+    const lowest = count ? Math.min(...tipped.map((r) => Number(r.tipAmount) || 0)) : 0
+    const avg = count ? Math.round(tipped.reduce((s, r) => s + (Number(r.tipAmount) || 0), 0) / count) : 0
+    return { totalTipRevenue: total, tippedCount: count, highestTip: highest, lowestTip: lowest, avgTip: avg }
+  }, [events, requests])
+
+  const djReportSummary = useMemo(() => [
+    { label: 'Total revenue (RWF)', value: totalTipRevenue.toLocaleString() },
+    { label: 'Total events', value: events?.length ?? 0 },
+    { label: 'Total requests', value: requests?.length ?? 0 },
+    { label: 'Total tipped requests', value: tippedCount },
+    { label: 'Average tip (RWF)', value: avgTip.toLocaleString() },
+    { label: 'Highest tip (RWF)', value: highestTip.toLocaleString() },
+    { label: 'Lowest tip (RWF)', value: lowestTip === Infinity ? '0' : lowestTip.toLocaleString() },
+    { label: 'Pending', value: requests?.filter((r) => r.status === RequestStatus.PENDING).length ?? 0 },
+    { label: 'Accepted', value: requests?.filter((r) => r.status === RequestStatus.ACCEPTED).length ?? 0 },
+    { label: 'Played', value: requests?.filter((r) => r.status === RequestStatus.PLAYED).length ?? 0 },
+    { label: 'Declined', value: requests?.filter((r) => r.status === RequestStatus.DECLINED).length ?? 0 },
+  ], [totalTipRevenue, events, requests, tippedCount, avgTip, highestTip, lowestTip])
+
+  const djReportTables = useMemo(() => {
+    const tables: { title: string; headers: string[]; rows: (string | number)[][] }[] = []
+    if (events?.length) {
+      tables.push({
+        title: 'Events (with revenue)',
+        headers: ['Event Name', 'Start', 'Status', 'Requests', 'Tip revenue (RWF)'],
+        rows: events.map((e) => [
+          e.name,
+          formatDateInRwanda(e.startTime),
+          e.status,
+          e.requestCount ?? 0,
+          (e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0'),
+        ]),
+      })
+    }
+    if (requests?.length) {
+      tables.push({
+        title: 'Song Requests (detailed)',
+        headers: ['Song', 'Artist', 'Requester', 'Phone', 'Tip (RWF)', 'Status', 'Created', 'Event'],
+        rows: requests.map((r) => [
+          r.songTitle ?? '',
+          r.songArtist ?? '',
+          r.requesterName ?? '',
+          r.payerPhone ?? '',
+          r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
+          r.status,
+          r.createdAt ? formatInRwanda(r.createdAt) : '',
+          r.eventName ?? '',
+        ]),
+      })
+    }
+    return tables
+  }, [events, requests])
 
   // Consistent placeholder until mounted to avoid hydration mismatch
   if (!mounted) {
@@ -276,59 +630,6 @@ export default function DjDashboardPage() {
 
   if (!currentUser || (currentUser.role !== Role.DJ && currentUser.role !== Role.ARTIST)) {
     return null
-  }
-
-  const selectedEvent = events?.find((e) => e.id === selectedEventId)
-
-  const totalTipRevenue = events?.reduce((sum, e) => sum + (Number(e.totalTipRevenue) || 0), 0) ?? 0
-  const tippedCount = requests?.filter((r) => (Number(r.tipAmount) || 0) > 0).length ?? 0
-  const tippedRequests = requests?.filter((r) => (Number(r.tipAmount) || 0) > 0) ?? []
-  const highestTip = tippedRequests.length ? Math.max(...tippedRequests.map((r) => Number(r.tipAmount) || 0)) : 0
-  const lowestTip = tippedRequests.length ? Math.min(...tippedRequests.map((r) => Number(r.tipAmount) || 0)) : 0
-  const avgTip = tippedRequests.length ? Math.round(tippedRequests.reduce((s, r) => s + (Number(r.tipAmount) || 0), 0) / tippedRequests.length) : 0
-
-  const djReportSummary = [
-    { label: 'Total revenue (RWF)', value: totalTipRevenue.toLocaleString() },
-    { label: 'Total events', value: events?.length ?? 0 },
-    { label: 'Total requests', value: requests?.length ?? 0 },
-    { label: 'Total tipped requests', value: tippedCount },
-    { label: 'Average tip (RWF)', value: avgTip.toLocaleString() },
-    { label: 'Highest tip (RWF)', value: highestTip.toLocaleString() },
-    { label: 'Lowest tip (RWF)', value: lowestTip === Infinity ? '0' : lowestTip.toLocaleString() },
-    { label: 'Pending', value: requests?.filter((r) => r.status === RequestStatus.PENDING).length ?? 0 },
-    { label: 'Accepted', value: requests?.filter((r) => r.status === RequestStatus.ACCEPTED).length ?? 0 },
-    { label: 'Played', value: requests?.filter((r) => r.status === RequestStatus.PLAYED).length ?? 0 },
-    { label: 'Declined', value: requests?.filter((r) => r.status === RequestStatus.DECLINED).length ?? 0 },
-  ]
-  const djReportTables: { title: string; headers: string[]; rows: (string | number)[][] }[] = []
-  if (events?.length) {
-    djReportTables.push({
-      title: 'Events (with revenue)',
-      headers: ['Event Name', 'Start', 'Status', 'Requests', 'Tip revenue (RWF)'],
-      rows: events.map((e) => [
-        e.name,
-        formatDateInRwanda(e.startTime),
-        e.status,
-        e.requestCount ?? 0,
-        (e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0'),
-      ]),
-    })
-  }
-  if (requests?.length) {
-    djReportTables.push({
-      title: 'Song Requests (detailed)',
-      headers: ['Song', 'Artist', 'Requester', 'Phone', 'Tip (RWF)', 'Status', 'Created', 'Event'],
-      rows: requests.map((r) => [
-        r.songTitle ?? '',
-        r.songArtist ?? '',
-        r.requesterName ?? '',
-        r.payerPhone ?? '',
-        r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
-        r.status,
-        r.createdAt ? formatInRwanda(r.createdAt) : '',
-        r.eventName ?? '',
-      ]),
-    })
   }
 
   return (
@@ -349,20 +650,18 @@ export default function DjDashboardPage() {
         </div>
         <div className="p-4 space-y-2">
           {events?.map((event) => (
-            <button
+            <MobileEventItem
               key={event.id}
-              type="button"
-              onClick={() => {
-                setSelectedEventId(event.id)
-                setMobileMenuOpen(false)
-              }}
-              className={`w-full text-left rounded-lg p-4 transition-all min-h-[44px] touch-manipulation ${
-                selectedEventId === event.id ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-white/5 border border-white/10'
-              }`}
-            >
-              <span className="font-medium text-white block">{event.name}</span>
-              <span className="text-sm text-gray-400">{event.requestCount} requests</span>
-            </button>
+              event={event}
+              isSelected={selectedEventId === event.id}
+              onSelect={() => setSelectedEventId(event.id)}
+              onEdit={() => handleEditEvent(event)}
+              onDelete={() => handleDeleteEvent(event.id)}
+              onEnd={() => handleEndEvent(event.id)}
+              isDeleting={deleteEventMutation.isPending}
+              isEnding={endEventMutation.isPending}
+              onCloseMenu={() => setMobileMenuOpen(false)}
+            />
           ))}
           {events?.length === 0 && <p className="text-gray-400 text-center py-4">No events yet</p>}
         </div>
@@ -410,15 +709,19 @@ export default function DjDashboardPage() {
           </div>
         </motion.div>
 
-        {/* Create Event Modal */}
+        {/* Create/Edit Event Modal */}
         <AnimatePresence>
-          {showCreateEvent && (
+          {(showCreateEvent || editingEventId !== null) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => setShowCreateEvent(false)}
+              onClick={() => {
+                setShowCreateEvent(false)
+                setEditingEventId(null)
+                setCreateEventError(null)
+              }}
             >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -431,8 +734,10 @@ export default function DjDashboardPage() {
                   glow={createEventError ? 'red' : 'purple'}
                   className={`p-8 ${createEventError ? 'ring-2 ring-red-500/50' : ''}`}
                 >
-                  <h2 className="text-2xl font-bold mb-6 text-gradient">Create New Event</h2>
-                  <form onSubmit={handleCreateEvent} className="space-y-4">
+                  <h2 className="text-2xl font-bold mb-6 text-gradient">
+                    {editingEventId ? 'Edit Event' : 'Create New Event'}
+                  </h2>
+                  <form onSubmit={editingEventId ? handleUpdateEvent : handleCreateEvent} className="space-y-4">
                     {createEventError && (
                       <motion.div
                         initial={{ opacity: 0, y: -8 }}
@@ -519,16 +824,23 @@ export default function DjDashboardPage() {
                     <div className="flex gap-4">
                       <GlowButton
                         type="submit"
-                        disabled={createEventMutation.isPending}
+                        disabled={editingEventId ? updateEventMutation.isPending : createEventMutation.isPending}
                         glowColor="pink"
                         className="flex-1"
                       >
-                        {createEventMutation.isPending ? 'Creating...' : 'Create Event'}
+                        {editingEventId 
+                          ? (updateEventMutation.isPending ? 'Updating...' : 'Update Event')
+                          : (createEventMutation.isPending ? 'Creating...' : 'Create Event')
+                        }
                       </GlowButton>
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setShowCreateEvent(false)}
+                        onClick={() => {
+                          setShowCreateEvent(false)
+                          setEditingEventId(null)
+                          setCreateEventError(null)
+                        }}
                         className="flex-1"
                       >
                         Cancel
@@ -552,27 +864,17 @@ export default function DjDashboardPage() {
               <div className="space-y-3">
                 {events && events.length > 0 ? (
                   events.map((event) => (
-                    <motion.div
+                    <EventCard
                       key={event.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={() => setSelectedEventId(event.id)}
-                      className={`
-                        glass rounded-lg p-4 cursor-pointer transition-all
-                        ${selectedEventId === event.id ? 'border-2 border-purple-500 glow-purple' : ''}
-                      `}
-                    >
-                      <h3 className="font-semibold mb-1">{event.name}</h3>
-                      <div className="flex items-center justify-between text-sm text-gray-400">
-                        <span>{event.requestCount} requests</span>
-                        {event.pendingRequestCount > 0 && (
-                          <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs">
-                            {event.pendingRequestCount} pending
-                          </span>
-                        )}
-                      </div>
-                    </motion.div>
+                      event={event}
+                      isSelected={selectedEventId === event.id}
+                      onSelect={() => setSelectedEventId(event.id)}
+                      onEdit={() => handleEditEvent(event)}
+                      onDelete={() => handleDeleteEvent(event.id)}
+                      onEnd={() => handleEndEvent(event.id)}
+                      isDeleting={deleteEventMutation.isPending}
+                      isEnding={endEventMutation.isPending}
+                    />
                   ))
                 ) : (
                   <p className="text-gray-400 text-center py-8">No events yet</p>
@@ -612,7 +914,26 @@ export default function DjDashboardPage() {
                 <GlassCard glow="blue">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-xl sm:text-2xl font-bold mb-2">{selectedEvent.name}</h2>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h2 className="text-xl sm:text-2xl font-bold">{selectedEvent.name}</h2>
+                        {selectedEvent.status === EventStatus.ENDED && (
+                          <span className="px-3 py-1 rounded-full bg-gray-500/20 text-gray-400 text-sm">
+                            Ended
+                          </span>
+                        )}
+                        {selectedEvent.status === EventStatus.ACTIVE && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEndEvent(selectedEvent.id)}
+                            disabled={endEventMutation.isPending}
+                            className="text-orange-400 border-orange-400/30 hover:bg-orange-400/10"
+                          >
+                            <StopCircle className="w-4 h-4 mr-2" />
+                            {endEventMutation.isPending ? 'Ending...' : 'End Event'}
+                          </Button>
+                        )}
+                      </div>
                       {selectedEvent.description && (
                         <p className="text-gray-300 mb-2 text-sm sm:text-base">{selectedEvent.description}</p>
                       )}

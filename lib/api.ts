@@ -177,6 +177,11 @@ export const djApi = {
     await api.delete(`/dj/events/${id}`)
   },
 
+  endEvent: async (id: number): Promise<DjEvent> => {
+    const response = await api.post<DjEvent>(`/dj/events/${id}/end`)
+    return response.data
+  },
+
   getRequests: async (): Promise<DjSongRequest[]> => {
     const response = await api.get<DjSongRequest[]>('/dj/requests')
     return response.data

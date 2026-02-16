@@ -8,6 +8,7 @@ export enum Role {
 export enum EventStatus {
   ACTIVE = 'ACTIVE',
   ENDED = 'ENDED',
+  DEACTIVATED = 'DEACTIVATED',
 }
 
 export enum RequestStatus {
@@ -48,6 +49,7 @@ export interface DjEvent {
   requestCount: number
   pendingRequestCount: number
   totalTipRevenue?: number | string
+  momoCode?: string
 }
 
 export interface DjSongRequest {
