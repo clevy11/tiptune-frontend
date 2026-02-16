@@ -18,6 +18,12 @@ export enum RequestStatus {
   PLAYED = 'PLAYED',
 }
 
+/** Payment type for tips: MoMo short code vs phone number (USSD format differs). */
+export enum TipPaymentType {
+  MOMO_CODE = 'MOMO_CODE',
+  PHONE_NUMBER = 'PHONE_NUMBER',
+}
+
 export interface User {
   id: number
   name: string
@@ -35,6 +41,7 @@ export interface Event {
   status: EventStatus
   createdBy: User
   djMomoCode?: string
+  tipPaymentType?: TipPaymentType
 }
 
 // DJ-specific types
@@ -50,6 +57,7 @@ export interface DjEvent {
   pendingRequestCount: number
   totalTipRevenue?: number | string
   momoCode?: string
+  tipPaymentType?: TipPaymentType
 }
 
 export interface DjSongRequest {
@@ -155,11 +163,65 @@ export interface RegisterRequest {
 export interface EventRequest {
   name: string
   description?: string
-  /** MoMo Payment Code: 4–10 digits for USSD *182*8*1*{code}*{amount}# */
+  /** MoMo code (4–10 digits) or phone number (9–15 digits). */
   momoCode: string
+  tipPaymentType?: TipPaymentType
   startTime: string
   endTime: string
   status: EventStatus
+}
+
+export interface TipInfoResponse {
+  djName: string
+  paymentType: TipPaymentType
+  paymentValue: string
+  tipLinkToken: string | null
+}
+
+export interface TipSettingsRequest {
+  tipPaymentType: TipPaymentType
+  paymentValue: string
+}
+
+/** One standalone tip record (permanent QR, no event). */
+export interface TipRecordResponse {
+  id: number
+  amount: number | string
+  payerName?: string | null
+  payerPhone?: string | null
+  createdAt: string
+  standalone: boolean
+}
+
+/** DJ revenue summary (all or filtered by date). */
+export interface DjRevenueSummaryResponse {
+  totalRevenue: number | string
+  songRequestRevenue: number | string
+  standaloneTipRevenue: number | string
+  tipRecordCount: number
+  dateFrom?: string | null
+  dateTo?: string | null
+  revenueByDay?: Array<{ date: string; revenue: number | string }>
+}
+
+/** Admin: revenue per DJ row. */
+export interface RevenueByDjResponse {
+  userId: number
+  userName: string
+  userEmail: string
+  totalRevenue: number | string
+  songRequestRevenue: number | string
+  standaloneTipRevenue: number | string
+  tipRecordCount: number
+}
+
+/** Payload for submitting a standalone tip (tip-only flow). One of tipLinkToken or eventAccessToken required. */
+export interface TipSubmitRequest {
+  tipLinkToken?: string
+  eventAccessToken?: string
+  amount: number
+  payerName?: string
+  payerPhone?: string
 }
 
 export interface SongRequestCreateRequest {

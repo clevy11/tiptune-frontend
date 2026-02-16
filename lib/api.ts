@@ -14,6 +14,12 @@ import type {
   PublicEvent,
   AdminEvent,
   AdminRequest,
+  TipInfoResponse,
+  TipRecordResponse,
+  TipSettingsRequest,
+  TipSubmitRequest,
+  DjRevenueSummaryResponse,
+  RevenueByDjResponse,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
@@ -200,6 +206,30 @@ export const djApi = {
     return response.data
   },
 
+  getTipSettings: async (): Promise<TipInfoResponse> => {
+    const response = await api.get<TipInfoResponse>('/dj/me/tip-settings')
+    return response.data
+  },
+
+  updateTipSettings: async (data: TipSettingsRequest): Promise<TipInfoResponse> => {
+    const response = await api.put<TipInfoResponse>('/dj/me/tip-settings', data)
+    return response.data
+  },
+
+  getStandaloneTipRecords: async (): Promise<TipRecordResponse[]> => {
+    const response = await api.get<TipRecordResponse[]>('/dj/me/tip-records')
+    return response.data
+  },
+
+  getRevenueSummary: async (params?: { from?: string; to?: string }): Promise<DjRevenueSummaryResponse> => {
+    const sp = new URLSearchParams()
+    if (params?.from) sp.set('from', params.from)
+    if (params?.to) sp.set('to', params.to)
+    const q = sp.toString()
+    const response = await api.get<DjRevenueSummaryResponse>(q ? `/dj/me/revenue-summary?${q}` : '/dj/me/revenue-summary')
+    return response.data
+  },
+
   getQRCodeImage: async (id: number, baseUrl: string = 'http://localhost:3000'): Promise<string> => {
     const response = await api.get(`/events/${id}/qr?baseUrl=${encodeURIComponent(baseUrl)}`, {
       responseType: 'blob',
@@ -325,6 +355,25 @@ export const songRequestApi = {
   },
 }
 
+/** Public tip (no auth). */
+export const publicTipApi = {
+  getTipInfo: async (token: string): Promise<TipInfoResponse> => {
+    const base =
+      typeof window !== 'undefined' ? getEffectiveApiBaseUrl() : API_BASE_URL
+    const response = await axios.get<TipInfoResponse>(
+      `${base}/public/tip-info/${token}`
+    )
+    return response.data
+  },
+
+  /** Submit standalone tip when user clicks Pay (records revenue). */
+  submitTip: async (data: TipSubmitRequest): Promise<void> => {
+    const base =
+      typeof window !== 'undefined' ? getEffectiveApiBaseUrl() : API_BASE_URL
+    await axios.post(`${base}/public/tip`, data)
+  },
+}
+
 // Admin API
 export const adminApi = {
   // Users
@@ -404,6 +453,14 @@ export const adminApi = {
     if (fromDate) params.append('fromDate', fromDate)
     if (toDate) params.append('toDate', toDate)
     const response = await api.get(`/admin/analytics?${params}`)
+    return response.data
+  },
+
+  getRevenueByDj: async (from?: string, to?: string): Promise<RevenueByDjResponse[]> => {
+    const params = new URLSearchParams()
+    if (from) params.append('from', from)
+    if (to) params.append('to', to)
+    const response = await api.get<RevenueByDjResponse[]>(`/admin/analytics/revenue-by-dj?${params}`)
     return response.data
   },
 }

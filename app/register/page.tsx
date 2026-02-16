@@ -152,7 +152,6 @@ export default function RegisterPage() {
               >
                 <option value={Role.USER}>User</option>
                 <option value={Role.DJ}>DJ</option>
-                <option value={Role.ARTIST}>Artist</option>
               </select>
             </motion.div>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { eventApi, songRequestApi } from '@/lib/api'
+import { eventApi, songRequestApi, publicTipApi } from '@/lib/api'
 import { AnimatedBackground } from '@/components/AnimatedBackground'
 import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
@@ -12,13 +12,33 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone } from 'lucide-react'
 import type { Event, PublicSongRequestCreateRequest, MusicSearchResult } from '@/lib/types'
+import { TipPaymentType } from '@/lib/types'
 import { MusicSearchInput } from '@/components/music/MusicSearchInput'
 import { formatInRwanda } from '@/lib/utils'
+
+type EventActionMode = 'choose' | 'tip_only' | 'request_song'
+
+async function submitTipAndOpenTel(
+  submit: () => Promise<void>,
+  telUrl: string,
+  setThankYou: (v: boolean) => void
+) {
+  setThankYou(true)
+  try {
+    await submit()
+  } catch (e) {
+    console.error('Failed to record tip:', e)
+  }
+  setTimeout(() => {
+    window.location.href = telUrl
+  }, 1200)
+}
 
 export default function PublicEventPage() {
   const params = useParams()
   const accessToken = params.accessToken as string
   const queryClient = useQueryClient()
+  const [actionMode, setActionMode] = useState<EventActionMode>('choose')
   const [formData, setFormData] = useState({
     songTitle: '',
     songArtist: '',
@@ -33,6 +53,7 @@ export default function PublicEventPage() {
   const [success, setSuccess] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [tipError, setTipError] = useState<string | null>(null)
+  const [thankYou, setThankYou] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -100,6 +121,10 @@ export default function PublicEventPage() {
       songAlbum: result.collectionName || '',
     })
   }
+
+  const paymentValue = event?.djMomoCode ?? ''
+  const tipPaymentType = event?.tipPaymentType ?? TipPaymentType.MOMO_CODE
+  const ussdPrefix = tipPaymentType === TipPaymentType.MOMO_CODE ? '*182*8*1*' : '*182*1*1*'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -249,6 +274,145 @@ export default function PublicEventPage() {
             </motion.div>
           </GlassCard>
 
+          {/* Choice: Tip only vs Request a song */}
+          {actionMode === 'choose' && (
+            <GlassCard glow="pink">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <h2 className="text-xl font-bold text-center mb-4">What would you like to do?</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <GlowButton
+                    type="button"
+                    onClick={() => setActionMode('tip_only')}
+                    glowColor="green"
+                    className="w-full py-6 flex flex-col items-center gap-2"
+                  >
+                    <DollarSign className="w-8 h-8" />
+                    <span>Tip only</span>
+                  </GlowButton>
+                  <GlowButton
+                    type="button"
+                    onClick={() => setActionMode('request_song')}
+                    glowColor="pink"
+                    className="w-full py-6 flex flex-col items-center gap-2"
+                  >
+                    <Music className="w-8 h-8" />
+                    <span>Request a song</span>
+                  </GlowButton>
+                </div>
+              </motion.div>
+            </GlassCard>
+          )}
+
+          {/* Tip only form (no song request) */}
+          {actionMode === 'tip_only' && event && (
+            <GlassCard glow="green">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <DollarSign className="w-6 h-6 text-green-400" />
+                    Tip the DJ
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setActionMode('choose')}
+                    className="text-sm text-gray-400 hover:text-gray-300 underline"
+                  >
+                    Back to choices
+                  </button>
+                </div>
+                {paymentValue && (
+                  <div className="rounded-lg bg-white/10 border border-green-500/30 p-4 mb-4">
+                    <p className="text-sm font-medium text-gray-300 mb-1">Payment</p>
+                    <p className="font-mono text-lg text-green-300 break-all tracking-wide">
+                      {ussdPrefix}{paymentValue}*{'{amount}'}#
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Dial this on your phone and replace {'{amount}'} with your tip in RWF.
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={500000}
+                      placeholder="e.g. 5000"
+                      value={formData.tipAmount}
+                      onChange={(e) => {
+                        setFormData({ ...formData, tipAmount: e.target.value })
+                        setTipError(null)
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                  {paymentValue && formData.tipAmount && (() => {
+                    const raw = Number(formData.tipAmount)
+                    const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
+                    const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
+                    const telUrl = `tel:${ussd}`
+                    const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                    return (
+                      <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">
+                        {thankYou ? (
+                          <p className="text-center py-4 text-green-300 font-medium">
+                            Thank you! Opening MoMo…
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-xs text-gray-400 mb-2">Then pay with MoMo (tip will be recorded)</p>
+                            <button
+                              type="button"
+                              onClick={() => submitTipAndOpenTel(
+                                () => publicTipApi.submitTip({
+                                  eventAccessToken: accessToken,
+                                  amount: safeAmount,
+                                  payerName: formData.payerName?.trim() || undefined,
+                                  payerPhone: formData.payerPhone?.trim() || undefined,
+                                }),
+                                telUrl,
+                                setThankYou
+                              )}
+                              className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation"
+                            >
+                              <Smartphone className="w-5 h-5" />
+                              Pay with MoMo — {safeAmount.toLocaleString()} RWF
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })()}
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
+                    <Input
+                      placeholder="Payer name"
+                      value={formData.payerName}
+                      onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+                    <Input
+                      type="tel"
+                      placeholder="Phone number"
+                      value={formData.payerPhone}
+                      onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                {tipError && <p className="text-sm text-red-400 mt-2" role="alert">{tipError}</p>}
+              </motion.div>
+            </GlassCard>
+          )}
+
           {/* Success Message */}
           <AnimatePresence>
             {success && (
@@ -268,231 +432,222 @@ export default function PublicEventPage() {
             )}
           </AnimatePresence>
 
-          {/* Request Form */}
-          <GlassCard glow="pink">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-pink-400" />
-                Request a Song
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Search for a Song *
-                  </label>
-                  <MusicSearchInput
-                    onSelect={handleSongSelect}
-                    selectedResult={selectedSong}
-                    placeholder="Type song name or artist..."
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    If you don&apos;t find your song in search, fill in the title and artist manually below.
-                  </p>
-                </motion.div>
-                
-                {/* Manual input fields (shown when song is selected or for manual entry) */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.75 }}
-                  className="space-y-3 pt-2 border-t border-white/10"
-                >
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">Song Title</label>
-                    <Input
-                      placeholder="Song Title *"
-                      value={formData.songTitle}
-                      onChange={(e) =>
-                        setFormData({ ...formData, songTitle: e.target.value })
-                      }
-                      required
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">Artist Name</label>
-                    <Input
-                      placeholder="Artist Name *"
-                      value={formData.songArtist}
-                      onChange={(e) =>
-                        setFormData({ ...formData, songArtist: e.target.value })
-                      }
-                      required
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">Album (optional)</label>
-                    <Input
-                      placeholder="Album"
-                      value={formData.songAlbum}
-                      onChange={(e) =>
-                        setFormData({ ...formData, songAlbum: e.target.value })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1 }}
-                >
-                  <Textarea
-                    placeholder="Message (optional)"
-                    rows={4}
-                    value={formData.message}
-                    onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
-                    className="w-full"
-                  />
-                </motion.div>
-
-                {/* Optional tip */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1.05 }}
-                  className="space-y-3 pt-2 border-t border-white/10"
-                >
-                  <p className="block text-sm font-medium text-gray-300 mb-2">
-                    Would you like to tip the DJ?
-                  </p>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="wantToTip"
-                        checked={formData.wantToTip === true}
-                        onChange={() => setFormData({ ...formData, wantToTip: true })}
-                        className="rounded-full border-white/30 bg-white/5"
-                      />
-                      <span className="text-gray-300">Yes</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="wantToTip"
-                        checked={formData.wantToTip === false}
-                        onChange={() => setFormData({ ...formData, wantToTip: false, tipAmount: '', payerName: '', payerPhone: '' })}
-                        className="rounded-full border-white/30 bg-white/5"
-                      />
-                      <span className="text-gray-300">No</span>
-                    </label>
-                  </div>
-                  {formData.wantToTip && (
-                    <div className="space-y-3 pl-2 border-l-2 border-pink-500/50">
-                      {event.djMomoCode && (
-                        <div className="rounded-lg bg-white/10 border border-pink-500/30 p-4">
-                          <p className="text-sm font-medium text-gray-300 mb-1">MoMo Payment Code</p>
-                          <p className="font-mono text-lg text-pink-300 break-all tracking-wide">
-                            *182*8*1*{event.djMomoCode}*{'{amount}'}#
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">Dial this on your phone and replace {'{amount}'} with your tip in RWF.</p>
-                        </div>
-                      )}
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={500000}
-                          placeholder="e.g. 5000"
-                          value={formData.tipAmount}
-                          onChange={(e) => {
-                            setFormData({ ...formData, tipAmount: e.target.value })
-                            setTipError(null)
-                          }}
-                          className="w-full"
-                        />
-                      </div>
-                      {/* Pay with MoMo: tel link uses server-provided djMomoCode only; amount sanitized 1–500000 */}
-                      {event.djMomoCode && formData.tipAmount && (() => {
-                        const raw = Number(formData.tipAmount)
-                        const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
-                        const ussd = `*182*8*1*${event.djMomoCode}*${safeAmount}#`
-                        const telUrl = `tel:${ussd}`
-                        const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                        return (
-                          <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">
-                            <p className="text-xs text-gray-400 mb-2">Then pay with MoMo</p>
-                            <a
-                              href={telUrl}
-                              className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation"
-                            >
-                              <Smartphone className="w-5 h-5" />
-                              Pay with MoMo — {safeAmount.toLocaleString()} RWF
-                            </a>
-                            {!isMobile && (
-                              <p className="text-xs text-gray-500 mt-2">
-                                On desktop: dial <span className="font-mono text-gray-400">{ussd}</span> on your phone.
-                              </p>
-                            )}
-                          </div>
-                        )
-                      })()}
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
-                        <Input
-                          placeholder="Payer name"
-                          value={formData.payerName}
-                          onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
-                        <Input
-                          type="tel"
-                          placeholder="Phone number"
-                          value={formData.payerPhone}
-                          onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {tipError && (
-                    <p className="text-sm text-red-400" role="alert">{tipError}</p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1 }}
-                >
-                  <GlowButton
-                    type="submit"
-                    disabled={createMutation.isPending || !event}
-                    glowColor="pink"
-                    className="w-full text-lg py-6"
+          {/* Request Form (song request + optional tip) */}
+          {actionMode === 'request_song' && (
+            <GlassCard glow="pink">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-pink-400" />
+                    Request a Song
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setActionMode('choose')}
+                    className="text-sm text-gray-400 hover:text-gray-300 underline"
                   >
-                    {createMutation.isPending ? (
-                      'Submitting...'
-                    ) : (
-                      <>
-                        <Send className="w-5 h-5 mr-2" />
-                        Submit Request
-                      </>
+                    Back to choices
+                  </button>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Search for a Song *
+                    </label>
+                    <MusicSearchInput
+                      onSelect={handleSongSelect}
+                      selectedResult={selectedSong}
+                      placeholder="Type song name or artist..."
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      If you don&apos;t find your song in search, fill in the title and artist manually below.
+                    </p>
+                  </motion.div>
+                  
+                  {/* Manual input fields (shown when song is selected or for manual entry) */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.75 }}
+                    className="space-y-3 pt-2 border-t border-white/10"
+                  >
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Song Title</label>
+                      <Input
+                        placeholder="Song Title *"
+                        value={formData.songTitle}
+                        onChange={(e) =>
+                          setFormData({ ...formData, songTitle: e.target.value })
+                        }
+                        required
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Artist Name</label>
+                      <Input
+                        placeholder="Artist Name *"
+                        value={formData.songArtist}
+                        onChange={(e) =>
+                          setFormData({ ...formData, songArtist: e.target.value })
+                        }
+                        required
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Album (optional)</label>
+                      <Input
+                        placeholder="Album"
+                        value={formData.songAlbum}
+                        onChange={(e) =>
+                          setFormData({ ...formData, songAlbum: e.target.value })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 }}
+                  >
+                    <Textarea
+                      placeholder="Message (optional)"
+                      rows={4}
+                      value={formData.message}
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
+                      }
+                      className="w-full"
+                    />
+                  </motion.div>
+
+                  {/* Optional tip */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.05 }}
+                    className="space-y-3 pt-2 border-t border-white/10"
+                  >
+                    <p className="block text-sm font-medium text-gray-300 mb-2">
+                      Would you like to tip the DJ?
+                    </p>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="wantToTip"
+                          checked={formData.wantToTip === true}
+                          onChange={() => setFormData({ ...formData, wantToTip: true })}
+                          className="rounded-full border-white/30 bg-white/5"
+                        />
+                        <span className="text-gray-300">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="wantToTip"
+                          checked={formData.wantToTip === false}
+                          onChange={() => setFormData({ ...formData, wantToTip: false, tipAmount: '', payerName: '', payerPhone: '' })}
+                          className="rounded-full border-white/30 bg-white/5"
+                        />
+                        <span className="text-gray-300">No</span>
+                      </label>
+                    </div>
+                    {formData.wantToTip && (
+                      <div className="space-y-3 pl-2 border-l-2 border-pink-500/50">
+                        {paymentValue && (
+                          <div className="rounded-lg bg-white/10 border border-pink-500/30 p-4">
+                            <p className="text-sm font-medium text-gray-300 mb-1">Payment</p>
+                            <p className="font-mono text-lg text-pink-300 break-all tracking-wide">
+                              {ussdPrefix}{paymentValue}*{'{amount}'}#
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">Dial this on your phone and replace {'{amount}'} with your tip in RWF.</p>
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={500000}
+                            placeholder="e.g. 5000"
+                            value={formData.tipAmount}
+                            onChange={(e) => {
+                              setFormData({ ...formData, tipAmount: e.target.value })
+                              setTipError(null)
+                            }}
+                            className="w-full"
+                          />
+                        </div>
+                        {/* Pay with MoMo: tel link; amount sanitized 1–500000 */}
+                        {paymentValue && formData.tipAmount && (() => {
+                          const raw = Number(formData.tipAmount)
+                          const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
+                          const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
+                          const telUrl = `tel:${ussd}`
+                          const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                          return (
+                            <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">
+                              <p className="text-xs text-gray-400 mb-2">Then pay with MoMo</p>
+                              <a
+                                href={telUrl}
+                                className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation"
+                              >
+                                <Smartphone className="w-5 h-5" />
+                                Pay with MoMo — {safeAmount.toLocaleString()} RWF
+                              </a>
+                              {!isMobile && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                  On desktop: dial <span className="font-mono text-gray-400">{ussd}</span> on your phone.
+                                </p>
+                              )}
+                            </div>
+                          )
+                        })()}
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
+                          <Input
+                            placeholder="Payer name"
+                            value={formData.payerName}
+                            onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+                          <Input
+                            type="tel"
+                            placeholder="Phone number"
+                            value={formData.payerPhone}
+                            onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
                     )}
+                  </motion.div>
+                  {tipError && <p className="text-sm text-red-400 mt-2" role="alert">{tipError}</p>}
+
+                  <GlowButton type="submit" glowColor="pink" className="w-full min-h-[48px]">
+                    Submit request
                   </GlowButton>
-                </motion.div>
-              </form>
-            </motion.div>
-          </GlassCard>
+                </form>
+              </motion.div>
+            </GlassCard>
+          )}
 
           {/* Recent Requests */}
-          {requests && requests.length > 0 && (
+          {actionMode === 'request_song' && requests && requests.length > 0 && (
             <GlassCard glow="blue">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

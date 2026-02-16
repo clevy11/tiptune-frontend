@@ -13,9 +13,10 @@ import { GlowButton } from '@/components/GlowButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle } from 'lucide-react'
-import type { DjEvent, DjSongRequest, EventRequest, Notification } from '@/lib/types'
-import { EventStatus, RequestStatus, Role } from '@/lib/types'
+import Link from 'next/link'
+import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle, QrCode, Download, FileDown } from 'lucide-react'
+import type { DjEvent, DjSongRequest, EventRequest, Notification, TipInfoResponse, TipRecordResponse, TipSettingsRequest, DjRevenueSummaryResponse } from '@/lib/types'
+import { EventStatus, RequestStatus, Role, TipPaymentType } from '@/lib/types'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ToastNotification } from '@/components/notifications/ToastNotification'
 import { useNotificationStore } from '@/store/notificationStore'
@@ -227,14 +228,21 @@ export default function DjDashboardPage() {
   const [requestFilter, setRequestFilter] = useState<string>('active')
   const [requestSort, setRequestSort] = useState<string>('tip_desc')
   const [requestTab, setRequestTab] = useState<'active' | 'played'>('active')
-  const [helpOpen, setHelpOpen] = useState(false)
   const [fullScreenRequests, setFullScreenRequests] = useState(false)
   const [highlightRequestId, setHighlightRequestId] = useState<number | null>(null)
   const [requestsDisplayCount, setRequestsDisplayCount] = useState(25)
+  const [tipSettingsForm, setTipSettingsForm] = useState<TipSettingsRequest>({
+    tipPaymentType: TipPaymentType.MOMO_CODE,
+    paymentValue: '',
+  })
+  const [showTipSettingsForm, setShowTipSettingsForm] = useState(false)
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
+  const [mobileTipsOpen, setMobileTipsOpen] = useState(false)
   const [newEvent, setNewEvent] = useState<EventRequest>({
     name: '',
     description: '',
     momoCode: '',
+    tipPaymentType: TipPaymentType.MOMO_CODE,
     startTime: '',
     endTime: '',
     status: EventStatus.ACTIVE,
@@ -287,6 +295,50 @@ export default function DjDashboardPage() {
     staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   })
+
+  const { data: tipSettings, refetch: refetchTipSettings } = useQuery<TipInfoResponse>({
+    queryKey: ['dj-tip-settings'],
+    queryFn: djApi.getTipSettings,
+    enabled: !!currentUser && (currentUser.role === Role.DJ || currentUser.role === Role.ARTIST),
+    staleTime: 2 * 60 * 1000,
+  })
+
+  const updateTipSettingsMutation = useMutation({
+    mutationFn: (data: TipSettingsRequest) => djApi.updateTipSettings(data),
+    onSuccess: () => {
+      setShowTipSettingsForm(false)
+      queryClient.invalidateQueries({ queryKey: ['dj-tip-settings'] })
+      queryClient.invalidateQueries({ queryKey: ['dj-tip-records'] })
+      refetchTipSettings()
+    },
+  })
+
+  const { data: standaloneTips } = useQuery<TipRecordResponse[]>({
+    queryKey: ['dj-tip-records'],
+    queryFn: djApi.getStandaloneTipRecords,
+    enabled: !!currentUser && (currentUser.role === Role.DJ || currentUser.role === Role.ARTIST),
+    staleTime: 1 * 60 * 1000,
+  })
+
+  const [revenueDateFrom, setRevenueDateFrom] = useState('')
+  const [revenueDateTo, setRevenueDateTo] = useState('')
+  const { data: revenueSummary } = useQuery<DjRevenueSummaryResponse>({
+    queryKey: ['dj-revenue-summary', revenueDateFrom || null, revenueDateTo || null],
+    queryFn: () => djApi.getRevenueSummary(
+      revenueDateFrom || revenueDateTo ? { from: revenueDateFrom || undefined, to: revenueDateTo || undefined } : undefined
+    ),
+    enabled: !!currentUser && (currentUser.role === Role.DJ || currentUser.role === Role.ARTIST),
+    staleTime: 1 * 60 * 1000,
+  })
+
+  useEffect(() => {
+    if (tipSettings) {
+      setTipSettingsForm({
+        tipPaymentType: tipSettings.paymentType ?? TipPaymentType.MOMO_CODE,
+        paymentValue: tipSettings.paymentValue ?? '',
+      })
+    }
+  }, [tipSettings])
 
   useEffect(() => {
     websocketService.connect()
@@ -395,6 +447,7 @@ export default function DjDashboardPage() {
         name: '',
         description: '',
         momoCode: '',
+        tipPaymentType: TipPaymentType.MOMO_CODE,
         startTime: '',
         endTime: '',
         status: EventStatus.ACTIVE,
@@ -491,6 +544,7 @@ export default function DjDashboardPage() {
         name: fullEvent.name,
         description: fullEvent.description || '',
         momoCode: fullEvent.momoCode || '',
+        tipPaymentType: fullEvent.tipPaymentType ?? TipPaymentType.MOMO_CODE,
         startTime: fullEvent.startTime ? new Date(fullEvent.startTime).toISOString().slice(0, 16) : '',
         endTime: fullEvent.endTime ? new Date(fullEvent.endTime).toISOString().slice(0, 16) : '',
         status: fullEvent.status,
@@ -501,6 +555,7 @@ export default function DjDashboardPage() {
         name: event.name,
         description: event.description || '',
         momoCode: event.momoCode || '',
+        tipPaymentType: event.tipPaymentType ?? TipPaymentType.MOMO_CODE,
         startTime: event.startTime ? new Date(event.startTime).toISOString().slice(0, 16) : '',
         endTime: event.endTime ? new Date(event.endTime).toISOString().slice(0, 16) : '',
         status: event.status,
@@ -665,6 +720,139 @@ export default function DjDashboardPage() {
           ))}
           {events?.length === 0 && <p className="text-gray-400 text-center py-4">No events yet</p>}
         </div>
+        {/* Permanent tip link — visible on mobile so QR is available */}
+        <div className="p-4 border-t border-white/10">
+          <h3 className="font-semibold text-white flex items-center gap-2 mb-2">
+            <QrCode className="w-4 h-4 text-green-400" />
+            Permanent tip link
+          </h3>
+          {tipSettings?.tipLinkToken ? (
+            <div className="space-y-2">
+              <p className="font-mono text-xs text-green-300 break-all">
+                {mounted && typeof window !== 'undefined' ? `${window.location.origin}/tip/${tipSettings.tipLinkToken}` : `/tip/${tipSettings.tipLinkToken}`}
+              </p>
+              {mounted && typeof window !== 'undefined' && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/tip/${tipSettings.tipLinkToken}`)}`}
+                    alt="Tip QR"
+                    className="rounded-lg border border-white/10 w-32 h-32 mx-auto block"
+                    width={200}
+                    height={200}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={async () => {
+                      const url = `${window.location.origin}/tip/${tipSettings.tipLinkToken}`
+                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(url)}`
+                      try {
+                        const res = await fetch(qrUrl)
+                        const blob = await res.blob()
+                        const a = document.createElement('a')
+                        a.href = URL.createObjectURL(blob)
+                        a.download = 'tiptune-tip-qr.png'
+                        a.click()
+                        URL.revokeObjectURL(a.href)
+                      } catch {
+                        window.open(qrUrl, '_blank')
+                      }
+                    }}
+                  >
+                    <Download className="w-4 h-4" />
+                    Download QR
+                  </Button>
+                  {showTipSettingsForm ? (
+                    <div className="space-y-2 pt-2 border-t border-white/10">
+                      <p className="text-xs text-gray-400">Update payment</p>
+                      <div className="flex gap-2">
+                        <label className="flex items-center gap-1 cursor-pointer text-sm">
+                          <input type="radio" name="tipSettingsTypeMobile" checked={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE}
+                            onChange={() => setTipSettingsForm({ ...tipSettingsForm, tipPaymentType: TipPaymentType.MOMO_CODE, paymentValue: tipSettingsForm.paymentValue.slice(0, 10) })} className="rounded-full border-white/30" />
+                          MoMo
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer text-sm">
+                          <input type="radio" name="tipSettingsTypeMobile" checked={tipSettingsForm.tipPaymentType === TipPaymentType.PHONE_NUMBER}
+                            onChange={() => setTipSettingsForm({ ...tipSettingsForm, tipPaymentType: TipPaymentType.PHONE_NUMBER })} className="rounded-full border-white/30" />
+                          Phone
+                        </label>
+                      </div>
+                      <Input placeholder={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 'MoMo code' : 'Phone'} value={tipSettingsForm.paymentValue}
+                        onChange={(e) => setTipSettingsForm({ ...tipSettingsForm, paymentValue: e.target.value.replace(/\D/g, '').slice(0, tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15) })}
+                        maxLength={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15} className="w-full font-mono text-sm" />
+                      <div className="flex gap-2">
+                        <GlowButton type="button" glowColor="green" size="sm" className="flex-1" disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
+                          onClick={() => updateTipSettingsMutation.mutate({ tipPaymentType: tipSettingsForm.tipPaymentType, paymentValue: tipSettingsForm.paymentValue.trim() })}>
+                          {updateTipSettingsMutation.isPending ? 'Saving...' : 'Update'}
+                        </GlowButton>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setShowTipSettingsForm(false)}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button type="button" variant="ghost" size="sm" className="w-full gap-2 text-gray-400" onClick={() => setShowTipSettingsForm(true)}>
+                      <Edit2 className="w-4 h-4" />
+                      Update payment details
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2 pt-2">
+              <p className="text-xs text-gray-400">Payment for tips</p>
+              <div className="flex gap-2">
+                <label className="flex items-center gap-1 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="tipSettingsTypeMobile"
+                    checked={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE}
+                    onChange={() => setTipSettingsForm({ ...tipSettingsForm, tipPaymentType: TipPaymentType.MOMO_CODE, paymentValue: tipSettingsForm.paymentValue.slice(0, 10) })}
+                    className="rounded-full border-white/30"
+                  />
+                  MoMo
+                </label>
+                <label className="flex items-center gap-1 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="tipSettingsTypeMobile"
+                    checked={tipSettingsForm.tipPaymentType === TipPaymentType.PHONE_NUMBER}
+                    onChange={() => setTipSettingsForm({ ...tipSettingsForm, tipPaymentType: TipPaymentType.PHONE_NUMBER })}
+                    className="rounded-full border-white/30"
+                  />
+                  Phone
+                </label>
+              </div>
+              <Input
+                placeholder={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 'MoMo code' : 'Phone'}
+                value={tipSettingsForm.paymentValue}
+                onChange={(e) => {
+                  const max = tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15
+                  setTipSettingsForm({ ...tipSettingsForm, paymentValue: e.target.value.replace(/\D/g, '').slice(0, max) })
+                }}
+                maxLength={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15}
+                className="w-full font-mono text-sm"
+              />
+              <GlowButton
+                type="button"
+                glowColor="green"
+                size="sm"
+                className="w-full"
+                disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
+                onClick={() => {
+                  updateTipSettingsMutation.mutate({
+                    tipPaymentType: tipSettingsForm.tipPaymentType,
+                    paymentValue: tipSettingsForm.paymentValue.trim(),
+                  })
+                }}
+              >
+                {updateTipSettingsMutation.isPending ? 'Saving...' : 'Save to get link'}
+              </GlowButton>
+            </div>
+          )}
+        </div>
       </MobileDrawer>
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8">
@@ -690,6 +878,13 @@ export default function DjDashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <NotificationBell />
+            <Link
+              href="/dashboard/dj/analytics"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-white/20 hover:bg-white/15 px-3 py-2 text-sm font-medium text-gray-200 min-h-[44px] touch-manipulation transition-colors"
+            >
+              <BarChart3 className="w-4 h-4 text-purple-400" />
+              Analytics
+            </Link>
             <GlowButton
               onClick={() => {
                 setCreateEventError(null)
@@ -763,23 +958,70 @@ export default function DjDashboardPage() {
                       rows={3}
                     />
                     <div>
+                      <p className="block text-sm font-medium text-gray-300 mb-2">
+                        Do you want to use Momo or Phone Number? *
+                      </p>
+                      <div className="flex gap-4 mb-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="tipPaymentType"
+                            checked={newEvent.tipPaymentType === TipPaymentType.MOMO_CODE}
+                            onChange={() =>
+                              setNewEvent({
+                                ...newEvent,
+                                tipPaymentType: TipPaymentType.MOMO_CODE,
+                                momoCode: newEvent.momoCode.slice(0, 10),
+                              })
+                            }
+                            className="rounded-full border-white/30 bg-white/5"
+                          />
+                          <span className="text-gray-300">MoMo</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="tipPaymentType"
+                            checked={newEvent.tipPaymentType === TipPaymentType.PHONE_NUMBER}
+                            onChange={() =>
+                              setNewEvent({
+                                ...newEvent,
+                                tipPaymentType: TipPaymentType.PHONE_NUMBER,
+                              })
+                            }
+                            className="rounded-full border-white/30 bg-white/5"
+                          />
+                          <span className="text-gray-300">Phone Number</span>
+                        </label>
+                      </div>
                       <label htmlFor="momoCode" className="block text-sm font-medium text-gray-300 mb-1">
-                        MoMo Payment Code *
+                        {newEvent.tipPaymentType === TipPaymentType.MOMO_CODE
+                          ? 'MoMo short code (4–10 digits) *'
+                          : 'Phone number (9–15 digits) *'}
                       </label>
                       <Input
                         id="momoCode"
-                        placeholder="e.g. 2345 (4–10 digits for *182*8*1*2345*amount#)"
+                        placeholder={
+                          newEvent.tipPaymentType === TipPaymentType.MOMO_CODE
+                            ? 'e.g. 2345'
+                            : 'e.g. 0781234567'
+                        }
                         value={newEvent.momoCode}
                         onChange={(e) => {
-                          const v = e.target.value.replace(/\D/g, '').slice(0, 10)
+                          const max = newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15
+                          const v = e.target.value.replace(/\D/g, '').slice(0, max)
                           setNewEvent({ ...newEvent, momoCode: v })
                           setCreateEventError(null)
                         }}
-                        maxLength={10}
+                        maxLength={newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15}
                         className="w-full font-mono"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Short code only (digits). Used for USSD: *182*8*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXX'}</span>*amount#
+                        {newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? (
+                          <>USSD: *182*8*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXX'}</span>*amount#</>
+                        ) : (
+                          <>USSD: *182*1*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXXXXXXX'}</span>*amount#</>
+                        )}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -858,7 +1100,7 @@ export default function DjDashboardPage() {
           <div className="hidden lg:block lg:col-span-1">
             <GlassCard glow="purple">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
+                <Music className="w-5 h-5 text-purple-400" />
                 My Events
               </h2>
               <div className="space-y-3">
@@ -881,36 +1123,239 @@ export default function DjDashboardPage() {
                 )}
               </div>
             </GlassCard>
+
+            {/* Permanent tip link */}
+            <GlassCard glow="green" className="mt-4">
+              <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-green-400" />
+                Permanent tip link
+              </h2>
+              {tipSettings?.tipLinkToken ? (
+                <>
+                  <p className="text-xs text-gray-400 mb-2">Share this link or QR for tips (no event needed).</p>
+                  <p className="font-mono text-sm text-green-300 break-all mb-2">
+                    {mounted && typeof window !== 'undefined' ? `${window.location.origin}/tip/${tipSettings.tipLinkToken}` : `/tip/${tipSettings.tipLinkToken}`}
+                  </p>
+                  {mounted && typeof window !== 'undefined' && (
+                    <div className="flex flex-col items-center my-3 gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(`${window.location.origin}/tip/${tipSettings.tipLinkToken}`)}`}
+                        alt="Tip QR code"
+                        className="rounded-lg border border-white/10 w-40 h-40 sm:w-48 sm:h-48"
+                        width={256}
+                        height={256}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={async () => {
+                          const url = `${window.location.origin}/tip/${tipSettings.tipLinkToken}`
+                          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(url)}`
+                          try {
+                            const res = await fetch(qrUrl)
+                            const blob = await res.blob()
+                            const a = document.createElement('a')
+                            a.href = URL.createObjectURL(blob)
+                            a.download = 'tiptune-tip-qr.png'
+                            a.click()
+                            URL.revokeObjectURL(a.href)
+                          } catch (e) {
+                            window.open(qrUrl, '_blank')
+                          }
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
+                        Download QR
+                      </Button>
+                      {!showTipSettingsForm && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 text-gray-400"
+                          onClick={() => setShowTipSettingsForm(true)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Update payment details
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-gray-400 mb-3">Set payment details below and save to get your permanent tip link.</p>
+              )}
+              {(showTipSettingsForm || !tipSettings?.tipLinkToken) && (
+                <div className="space-y-2 pt-2 border-t border-white/10">
+                  <p className="text-xs font-medium text-gray-300">Payment for tips</p>
+                  <div className="flex gap-2">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="tipSettingsType"
+                        checked={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE}
+                        onChange={() => setTipSettingsForm({ ...tipSettingsForm, tipPaymentType: TipPaymentType.MOMO_CODE, paymentValue: tipSettingsForm.paymentValue.slice(0, 10) })}
+                        className="rounded-full border-white/30"
+                      />
+                      <span className="text-sm">MoMo</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="tipSettingsType"
+                        checked={tipSettingsForm.tipPaymentType === TipPaymentType.PHONE_NUMBER}
+                        onChange={() => setTipSettingsForm({ ...tipSettingsForm, tipPaymentType: TipPaymentType.PHONE_NUMBER })}
+                        className="rounded-full border-white/30"
+                      />
+                      <span className="text-sm">Phone</span>
+                    </label>
+                  </div>
+                  <Input
+                    placeholder={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 'MoMo code (4-10 digits)' : 'Phone (9-15 digits)'}
+                    value={tipSettingsForm.paymentValue}
+                    onChange={(e) => {
+                      const max = tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15
+                      setTipSettingsForm({ ...tipSettingsForm, paymentValue: e.target.value.replace(/\D/g, '').slice(0, max) })
+                    }}
+                    maxLength={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15}
+                    className="w-full font-mono text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <GlowButton
+                      type="button"
+                      glowColor="green"
+                      className="flex-1"
+                      disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
+                      onClick={() => updateTipSettingsMutation.mutate({
+                        tipPaymentType: tipSettingsForm.tipPaymentType,
+                        paymentValue: tipSettingsForm.paymentValue.trim(),
+                      })}
+                    >
+                      {updateTipSettingsMutation.isPending ? 'Saving...' : tipSettings?.tipLinkToken ? 'Update' : 'Save'}
+                    </GlowButton>
+                    {tipSettings?.tipLinkToken && showTipSettingsForm && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowTipSettingsForm(false)}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </GlassCard>
+
+            {/* Total revenue & Tip records count */}
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <GlassCard glow="green" className="p-3">
+                <p className="text-xs text-gray-400 mb-1">Total revenue</p>
+                <p className="text-lg font-bold text-green-400">
+                  {(revenueSummary ? Number(revenueSummary.totalRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
+                </p>
+              </GlassCard>
+              <GlassCard glow="green" className="p-3">
+                <p className="text-xs text-gray-400 mb-1">Tip-only records</p>
+                <p className="text-lg font-bold text-green-400">{revenueSummary?.tipRecordCount ?? standaloneTips?.length ?? 0}</p>
+              </GlassCard>
+            </div>
+
+            {/* Tip-only tips (standalone, not from events) */}
+            <GlassCard glow="green" className="mt-4">
+              <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-400" />
+                Tip-only tips
+              </h2>
+              <p className="text-xs text-gray-400 mb-3">Tips from your permanent link (no song request).</p>
+              {standaloneTips && standaloneTips.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {standaloneTips.map((t) => (
+                    <div key={t.id} className="rounded-lg bg-white/5 border border-white/10 p-2 text-sm">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="font-medium text-green-300">{Number(t.amount).toLocaleString()} RWF</span>
+                        <span className="text-xs text-gray-500">
+                          {typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      {(t.payerName || t.payerPhone) && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {[t.payerName, t.payerPhone].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-4 text-sm">No tip-only tips yet</p>
+              )}
+            </GlassCard>
           </div>
 
           {/* Event Details & Requests */}
           <div className="lg:col-span-2">
-            {selectedEvent ? (
-              <div className="space-y-6">
-                {/* Help panel - collapsible */}
-                <GlassCard glow="purple" className="overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setHelpOpen((o) => !o)}
-                    className="w-full flex items-center justify-between gap-2 p-3 text-left hover:bg-white/5 rounded-lg transition-colors min-h-[44px] touch-manipulation"
-                    aria-expanded={helpOpen}
-                  >
-                    <span className="flex items-center gap-2 font-medium text-gray-200">
-                      <HelpCircle className="w-5 h-5 text-purple-400" />
-                      How tipping & revenue work
-                    </span>
-                    {helpOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                  </button>
-                  {helpOpen && (
-                    <div className="px-3 pb-4 pt-1 border-t border-white/10 space-y-3 text-sm text-gray-300">
-                      <p><strong className="text-gray-200">Tipping:</strong> When someone submits a request with a tip, the amount is added to your event revenue immediately. No payment gateway — they pay via MoMo USSD.</p>
-                      <p><strong className="text-gray-200">Revenue:</strong> Revenue = sum of all non-declined tipped requests. When you <strong>decline</strong> a request, that tip is automatically deducted from revenue.</p>
-                      <p><strong className="text-gray-200">Accept / Decline:</strong> Accept to queue the song; decline to reject it (and remove its tip from revenue). Played requests move to the &quot;Played&quot; tab and stay in revenue.</p>
-                      <p><strong className="text-gray-200">Updates:</strong> Revenue and request lists update in real time when new tipped requests arrive or when you decline one.</p>
-                    </div>
-                  )}
+            {/* Mobile-only: compact revenue strip + collapsible Tip-only tips */}
+            <div className="lg:hidden mb-4">
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <GlassCard glow="green" className="p-3">
+                  <p className="text-xs text-gray-400">Revenue</p>
+                  <p className="text-base font-bold text-green-400">
+                    {(revenueSummary ? Number(revenueSummary.totalRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
+                  </p>
                 </GlassCard>
+                <GlassCard glow="green" className="p-3">
+                  <p className="text-xs text-gray-400">Tip-only</p>
+                  <p className="text-base font-bold text-green-400">{revenueSummary?.tipRecordCount ?? standaloneTips?.length ?? 0}</p>
+                </GlassCard>
+              </div>
+              <GlassCard glow="green" className="overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMobileTipsOpen((o) => !o)}
+                  className="w-full flex items-center justify-between gap-2 py-2 text-left hover:bg-white/5 rounded-lg min-h-[44px] touch-manipulation"
+                  aria-expanded={mobileTipsOpen}
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium text-gray-200">
+                    <DollarSign className="w-4 h-4 text-green-400" />
+                    Tip-only tips {standaloneTips && standaloneTips.length > 0 && (
+                      <span className="text-green-400">({standaloneTips.length})</span>
+                    )}
+                  </span>
+                  {mobileTipsOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                </button>
+                {mobileTipsOpen && (
+                  <div className="pt-2 border-t border-white/10 space-y-2 max-h-48 overflow-y-auto">
+                    {standaloneTips && standaloneTips.length > 0 ? (
+                      standaloneTips.slice(0, 10).map((t) => (
+                        <div key={t.id} className="rounded-lg bg-white/5 border border-white/10 p-2 text-sm">
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="font-medium text-green-300">{Number(t.amount).toLocaleString()} RWF</span>
+                            <span className="text-xs text-gray-500">
+                              {typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                            </span>
+                          </div>
+                          {(t.payerName || t.payerPhone) && (
+                            <p className="text-xs text-gray-400 mt-1">{[t.payerName, t.payerPhone].filter(Boolean).join(' · ')}</p>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-400 text-center py-2 text-sm">No tip-only tips yet</p>
+                    )}
+                    {standaloneTips && standaloneTips.length > 10 && (
+                      <p className="text-xs text-gray-500 text-center">+{standaloneTips.length - 10} more</p>
+                    )}
+                  </div>
+                )}
+              </GlassCard>
+            </div>
 
+            {selectedEvent ? (
+              <div className="space-y-4">
+                {/* 1. Event details & QR (back in place) */}
                 <GlassCard glow="blue">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                     <div className="min-w-0 flex-1">
@@ -957,76 +1402,7 @@ export default function DjDashboardPage() {
                   </div>
                 </GlassCard>
 
-                {/* Tip revenue & request analytics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <GlassCard glow="green" className="min-h-[80px]">
-                    <div className="p-4 flex items-center gap-3">
-                      <DollarSign className="w-8 h-8 text-green-400 flex-shrink-0" />
-                      <div>
-                        <div className="text-xl font-bold text-green-400">
-                          {typeof selectedEvent?.totalTipRevenue === 'number' || typeof selectedEvent?.totalTipRevenue === 'string'
-                            ? Number(selectedEvent.totalTipRevenue).toLocaleString()
-                            : '0'}
-                          <span className="text-sm font-normal text-gray-400 ml-1">RWF</span>
-                        </div>
-                        <div className="text-sm text-gray-400">Tip revenue</div>
-                      </div>
-                    </div>
-                  </GlassCard>
-                  {requests && requests.length > 0 && (
-                    <>
-                      <GlassCard glow="yellow">
-                        <div className="p-4 text-center">
-                          <div className="text-2xl font-bold text-yellow-400">{requests.filter(r => r.status === RequestStatus.PENDING).length}</div>
-                          <div className="text-sm text-gray-400 mt-1">Pending</div>
-                        </div>
-                      </GlassCard>
-                      <GlassCard glow="green">
-                        <div className="p-4 text-center">
-                          <div className="text-2xl font-bold text-green-400">{requests.filter(r => r.status === RequestStatus.ACCEPTED).length}</div>
-                          <div className="text-sm text-gray-400 mt-1">Accepted</div>
-                        </div>
-                      </GlassCard>
-                      <GlassCard glow="red">
-                        <div className="p-4 text-center">
-                          <div className="text-2xl font-bold text-red-400">{requests.filter(r => r.status === RequestStatus.DECLINED).length}</div>
-                          <div className="text-sm text-gray-400 mt-1">Declined</div>
-                        </div>
-                      </GlassCard>
-                      <GlassCard glow="blue">
-                        <div className="p-4 text-center">
-                          <div className="text-2xl font-bold text-blue-400">{requests.filter(r => r.status === RequestStatus.PLAYED).length}</div>
-                          <div className="text-sm text-gray-400 mt-1">Played</div>
-                        </div>
-                      </GlassCard>
-                    </>
-                  )}
-                </div>
-
-                {/* Tip stats (from current request list) */}
-                {requests && requests.length > 0 && (() => {
-                  const tipped = requests.filter(r => (Number(r.tipAmount) || 0) > 0)
-                  const totalTip = tipped.reduce((s, r) => s + (Number(r.tipAmount) || 0), 0)
-                  const highest = tipped.length ? Math.max(...tipped.map(r => Number(r.tipAmount) || 0)) : 0
-                  const avg = tipped.length ? Math.round(totalTip / tipped.length) : 0
-                  return tipped.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <GlassCard glow="green" className="p-3">
-                        <div className="text-sm text-gray-400">Tipped requests</div>
-                        <div className="text-lg font-bold text-green-400">{tipped.length}</div>
-                      </GlassCard>
-                      <GlassCard glow="green" className="p-3">
-                        <div className="text-sm text-gray-400">Highest tip</div>
-                        <div className="text-lg font-bold text-green-400">{highest.toLocaleString()} RWF</div>
-                      </GlassCard>
-                      <GlassCard glow="green" className="p-3">
-                        <div className="text-sm text-gray-400">Average tip</div>
-                        <div className="text-lg font-bold text-green-400">{avg.toLocaleString()} RWF</div>
-                      </GlassCard>
-                    </div>
-                  ) : null
-                })()}
-
+                {/* 2. Song Requests — primary focus */}
                 <GlassCard glow="pink" className={!fullScreenRequests ? 'sticky top-4 z-10' : ''}>
                   <div className="flex flex-col gap-4 mb-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1205,11 +1581,97 @@ export default function DjDashboardPage() {
                     )}
                   </div>
                 </GlassCard>
+
+                {/* 3. Compact stats + one "More" collapsible (revenue & help) */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-2.5 rounded-lg bg-white/5 border border-white/10 text-sm">
+                  <span className="text-green-400 font-medium">
+                    {typeof selectedEvent?.totalTipRevenue === 'number' || typeof selectedEvent?.totalTipRevenue === 'string'
+                      ? `${Number(selectedEvent.totalTipRevenue).toLocaleString()} RWF`
+                      : '0 RWF'}
+                  </span>
+                  {requests && requests.length > 0 && (
+                    <>
+                      <span className="text-gray-500">·</span>
+                      <span className="text-yellow-400">{requests.filter(r => r.status === RequestStatus.PENDING).length} pending</span>
+                      <span className="text-green-400">{requests.filter(r => r.status === RequestStatus.ACCEPTED).length} accepted</span>
+                      <span className="text-blue-400">{requests.filter(r => r.status === RequestStatus.PLAYED).length} played</span>
+                    </>
+                  )}
+                </div>
+
+                {/* More: Revenue report + Help (single collapsible) */}
+                <GlassCard glow="purple" className="overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setAnalyticsOpen((o) => !o)}
+                    className="w-full flex items-center justify-between gap-2 p-3 text-left hover:bg-white/5 rounded-lg transition-colors min-h-[44px] touch-manipulation"
+                    aria-expanded={analyticsOpen}
+                  >
+                    <span className="flex items-center gap-2 font-medium text-gray-200">
+                      <BarChart3 className="w-5 h-5 text-purple-400" />
+                      Revenue report & help
+                    </span>
+                    {analyticsOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  </button>
+                  {analyticsOpen && (
+                    <div className="px-3 pb-4 pt-1 border-t border-white/10 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">From</label>
+                          <Input type="date" value={revenueDateFrom} onChange={(e) => setRevenueDateFrom(e.target.value)} className="bg-white/5" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">To</label>
+                          <Input type="date" value={revenueDateTo} onChange={(e) => setRevenueDateTo(e.target.value)} className="bg-white/5" />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => { setRevenueDateFrom(''); setRevenueDateTo('') }}>Clear</Button>
+                        <GlowButton
+                          size="sm"
+                          glowColor="green"
+                          onClick={async () => {
+                            const from = revenueDateFrom || undefined
+                            const to = revenueDateTo || undefined
+                            const data = await djApi.getRevenueSummary(from || to ? { from, to } : undefined)
+                            const rows: string[] = ['Total Revenue (RWF),Song Request Revenue (RWF),Standalone Tip Revenue (RWF),Tip-only Records']
+                            rows.push(`${Number(data.totalRevenue).toLocaleString()},${Number(data.songRequestRevenue).toLocaleString()},${Number(data.standaloneTipRevenue).toLocaleString()},${data.tipRecordCount}`)
+                            if (data.revenueByDay && data.revenueByDay.length > 0) {
+                              rows.push('')
+                              rows.push('Date,Revenue (RWF)')
+                              data.revenueByDay.forEach((d) => rows.push(`${d.date},${Number(d.revenue).toLocaleString()}`))
+                            }
+                            const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' })
+                            const a = document.createElement('a')
+                            a.href = URL.createObjectURL(blob)
+                            a.download = `revenue-report${from && to ? `-${from}-${to}` : ''}.csv`
+                            a.click()
+                            URL.revokeObjectURL(a.href)
+                          }}
+                        >
+                          <FileDown className="w-4 h-4 mr-2" />
+                          Download report
+                        </GlowButton>
+                      </div>
+                      {revenueSummary && (
+                        <p className="text-sm text-gray-300">
+                          Total <span className="text-green-400 font-medium">{Number(revenueSummary.totalRevenue).toLocaleString()} RWF</span>
+                          {' · '}Events: {Number(revenueSummary.songRequestRevenue).toLocaleString()} · Tip-only: {Number(revenueSummary.standaloneTipRevenue).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="pt-2 border-t border-white/10 text-sm text-gray-300 space-y-2">
+                        <p className="font-medium text-gray-200">How it works</p>
+                        <p>Tips are added to event revenue when someone pays via MoMo. Accept = keep tip; Decline = remove tip from revenue. Played requests stay in revenue.</p>
+                      </div>
+                    </div>
+                  )}
+                </GlassCard>
               </div>
             ) : (
               <GlassCard glow="purple" className="text-center py-12">
                 <Music className="w-16 h-16 mx-auto mb-4 text-purple-400" />
-                <p className="text-gray-400">Select an event to view details</p>
+                <p className="text-gray-400 mb-2">Select an event to manage song requests</p>
+                <p className="text-sm text-gray-500">Use the menu on the left (desktop) or tap the menu icon (mobile)</p>
               </GlassCard>
             )}
           </div>

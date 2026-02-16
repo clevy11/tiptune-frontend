@@ -26,7 +26,7 @@ import {
   AlertCircle,
   DollarSign
 } from 'lucide-react'
-import type { User, AdminEvent, AdminRequest } from '@/lib/types'
+import type { User, AdminEvent, AdminRequest, RevenueByDjResponse } from '@/lib/types'
 import { Role, EventStatus, RequestStatus } from '@/lib/types'
 import { DashboardProfile } from '@/components/dashboard/DashboardProfile'
 import { getCurrentUser } from '@/lib/auth'
@@ -62,7 +62,9 @@ export default function AdminDashboardPage() {
   const queryClient = useQueryClient()
   const mounted = useMounted()
   const [profileUser, setProfileUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'events' | 'requests'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'events' | 'requests' | 'revenue'>('overview')
+  const [revenueFrom, setRevenueFrom] = useState('')
+  const [revenueTo, setRevenueTo] = useState('')
   const [error, setError] = useState<string | null>(null)
   
   // Filters
@@ -141,6 +143,14 @@ export default function AdminDashboardPage() {
     enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'requests',
     staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
+  })
+
+  // Revenue by DJ (filterable by date)
+  const { data: revenueByDj, isLoading: revenueByDjLoading } = useQuery<RevenueByDjResponse[]>({
+    queryKey: ['admin-revenue-by-dj', revenueFrom, revenueTo],
+    queryFn: () => adminApi.getRevenueByDj(revenueFrom || undefined, revenueTo || undefined),
+    enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'revenue',
+    staleTime: 1 * 60 * 1000,
   })
 
   const handleLogout = () => {
@@ -279,7 +289,7 @@ export default function AdminDashboardPage() {
 
         {/* Tabs — wrap on mobile, touch-friendly */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {(['overview', 'users', 'events', 'requests'] as const).map((tab) => (
+          {(['overview', 'users', 'events', 'requests', 'revenue'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -783,6 +793,81 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
                 </>
+              )}
+            </div>
+          </GlassCard>
+        )}
+
+        {/* Revenue by DJ Tab */}
+        {activeTab === 'revenue' && (
+          <GlassCard glow="green" noEnterAnimation>
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <h2 className="text-2xl font-bold text-gradient">Revenue by DJ</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input type="date" value={revenueFrom} onChange={(e) => setRevenueFrom(e.target.value)} placeholder="From" className="bg-white/10 w-40" />
+                  <Input type="date" value={revenueTo} onChange={(e) => setRevenueTo(e.target.value)} placeholder="To" className="bg-white/10 w-40" />
+                  <Button variant="outline" size="sm" onClick={() => { setRevenueFrom(''); setRevenueTo('') }}>Clear</Button>
+                  <GlowButton
+                    size="sm"
+                    glowColor="green"
+                    onClick={() => {
+                      if (!revenueByDj?.length) return
+                      const headers = 'DJ Name,Email,Total Revenue (RWF),Song Request Revenue (RWF),Standalone Tip Revenue (RWF),Tip-only Records'
+                      const rows = revenueByDj.map((d) => [
+                        `"${(d.userName ?? '').replace(/"/g, '""')}"`,
+                        `"${(d.userEmail ?? '').replace(/"/g, '""')}"`,
+                        Number(d.totalRevenue).toLocaleString(),
+                        Number(d.songRequestRevenue).toLocaleString(),
+                        Number(d.standaloneTipRevenue).toLocaleString(),
+                        d.tipRecordCount,
+                      ].join(','))
+                      const csv = [headers, ...rows].join('\n')
+                      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+                      const a = document.createElement('a')
+                      a.href = URL.createObjectURL(blob)
+                      a.download = `revenue-by-dj${revenueFrom || revenueTo ? `-${revenueFrom || ''}-${revenueTo || ''}` : ''}.csv`
+                      a.click()
+                      URL.revokeObjectURL(a.href)
+                    }}
+                    disabled={!revenueByDj?.length}
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </GlowButton>
+                </div>
+              </div>
+              {revenueByDjLoading ? (
+                <div className="text-center py-12 text-gray-400">Loading...</div>
+              ) : revenueByDj && revenueByDj.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-white/20 text-gray-400">
+                        <th className="py-3 px-2">DJ Name</th>
+                        <th className="py-3 px-2">Email</th>
+                        <th className="py-3 px-2 text-right">Total (RWF)</th>
+                        <th className="py-3 px-2 text-right">From events</th>
+                        <th className="py-3 px-2 text-right">Tip-only</th>
+                        <th className="py-3 px-2 text-right">Tip records</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {revenueByDj.map((d) => (
+                        <tr key={d.userId} className="border-b border-white/10 hover:bg-white/5">
+                          <td className="py-3 px-2 font-medium text-white">{d.userName}</td>
+                          <td className="py-3 px-2 text-gray-300">{d.userEmail}</td>
+                          <td className="py-3 px-2 text-right text-green-400 font-medium">{Number(d.totalRevenue).toLocaleString()}</td>
+                          <td className="py-3 px-2 text-right text-gray-300">{Number(d.songRequestRevenue).toLocaleString()}</td>
+                          <td className="py-3 px-2 text-right text-gray-300">{Number(d.standaloneTipRevenue).toLocaleString()}</td>
+                          <td className="py-3 px-2 text-right text-gray-400">{d.tipRecordCount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-400">No revenue data</div>
               )}
             </div>
           </GlassCard>
