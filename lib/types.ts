@@ -202,6 +202,7 @@ export interface DjRevenueSummaryResponse {
   dateFrom?: string | null
   dateTo?: string | null
   revenueByDay?: Array<{ date: string; revenue: number | string }>
+  revenueByHour?: Array<{ hour: string; revenue: number | string }>
 }
 
 /** Admin: revenue per DJ row. */
@@ -213,6 +214,26 @@ export interface RevenueByDjResponse {
   songRequestRevenue: number | string
   standaloneTipRevenue: number | string
   tipRecordCount: number
+}
+
+/** Admin/DJ: revenue series for charts (hour/day). */
+export interface RevenueSeriesResponse {
+  djId?: number | null
+  interval: 'day' | 'hour' | string
+  dateFrom?: string | null
+  dateTo?: string | null
+  totalRevenue: number | string
+  songRequestRevenue: number | string
+  tipRecordRevenue: number | string
+  totalRequests: number
+  points: Array<{ bucket: string; revenue: number | string }>
+}
+
+/** Admin/DJ: top requested songs row. */
+export interface TopSongResponse {
+  title: string
+  artist: string
+  requestCount: number
 }
 
 /** Payload for submitting a standalone tip (tip-only flow). One of tipLinkToken or eventAccessToken required. */

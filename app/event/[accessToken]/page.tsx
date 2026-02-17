@@ -12,22 +12,29 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone } from 'lucide-react'
 import type { Event, PublicSongRequestCreateRequest, MusicSearchResult } from '@/lib/types'
-import { TipPaymentType } from '@/lib/types'
+import { EventStatus, TipPaymentType } from '@/lib/types'
 import { MusicSearchInput } from '@/components/music/MusicSearchInput'
 import { formatInRwanda } from '@/lib/utils'
+import { getApiErrorMessage } from '@/lib/apiClient'
 
 type EventActionMode = 'choose' | 'tip_only' | 'request_song'
 
 async function submitTipAndOpenTel(
   submit: () => Promise<void>,
   telUrl: string,
-  setThankYou: (v: boolean) => void
+  setThankYou: (v: boolean) => void,
+  onError?: (message: string) => void,
+  blockRedirectOnError: boolean = false
 ) {
   setThankYou(true)
   try {
     await submit()
   } catch (e) {
+    const msg = getApiErrorMessage(e)
     console.error('Failed to record tip:', e)
+    onError?.(msg)
+    setThankYou(false)
+    if (blockRedirectOnError) return
   }
   setTimeout(() => {
     window.location.href = telUrl
@@ -53,6 +60,7 @@ export default function PublicEventPage() {
   const [success, setSuccess] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [tipError, setTipError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [thankYou, setThankYou] = useState(false)
 
   useEffect(() => {
@@ -103,12 +111,22 @@ export default function PublicEventPage() {
       })
       setSelectedSong(null)
       setTipError(null)
+      setActionError(null)
       queryClient.invalidateQueries({ queryKey: ['requests', accessToken] })
       setTimeout(() => setSuccess(false), 3000)
     },
     onError: (error: any) => {
       console.error('Failed to submit request:', error)
-      // Error will be handled by error boundary or shown in UI
+      const msg = getApiErrorMessage(error)
+      const lower = msg.toLowerCase()
+      if (lower.includes('not active') || lower.includes('ended') || lower.includes('deleted')) {
+        // Prefer a user-friendly message based on current event status (if available)
+        if (event?.status === EventStatus.ENDED) setActionError('This event has ended.')
+        else if (event?.status === EventStatus.DEACTIVATED) setActionError('This event has been deleted.')
+        else setActionError('This event is no longer active.')
+      } else {
+        setActionError(msg)
+      }
     },
   })
 
@@ -125,12 +143,21 @@ export default function PublicEventPage() {
   const paymentValue = event?.djMomoCode ?? ''
   const tipPaymentType = event?.tipPaymentType ?? TipPaymentType.MOMO_CODE
   const ussdPrefix = tipPaymentType === TipPaymentType.MOMO_CODE ? '*182*8*1*' : '*182*1*1*'
+  const isEventEnded = event?.status === EventStatus.ENDED
+  const isEventDeleted = event?.status === EventStatus.DEACTIVATED
+  const isEventBlocked = Boolean(isEventEnded || isEventDeleted)
+  const eventBlockedMessage = isEventEnded ? 'This event has ended.' : isEventDeleted ? 'This event has been deleted.' : null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setTipError(null)
+    setActionError(null)
     if (!event || !accessToken) {
       console.error('Cannot submit: event or accessToken is missing')
+      return
+    }
+    if (isEventBlocked) {
+      setActionError(eventBlockedMessage || 'This event is no longer active.')
       return
     }
     const wantToTip = formData.wantToTip
@@ -274,6 +301,18 @@ export default function PublicEventPage() {
             </motion.div>
           </GlassCard>
 
+          {/* Event availability banner */}
+          {isEventBlocked && (
+            <GlassCard glow="red" className="border border-red-500/30 bg-red-500/5">
+              <p className="text-red-200 font-medium">
+                {eventBlockedMessage}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                You can’t request songs or send tips for this event.
+              </p>
+            </GlassCard>
+          )}
+
           {/* Choice: Tip only vs Request a song */}
           {actionMode === 'choose' && (
             <GlassCard glow="pink">
@@ -289,6 +328,7 @@ export default function PublicEventPage() {
                     onClick={() => setActionMode('tip_only')}
                     glowColor="green"
                     className="w-full py-6 flex flex-col items-center gap-2"
+                    disabled={isEventBlocked}
                   >
                     <DollarSign className="w-8 h-8" />
                     <span>Tip only</span>
@@ -298,6 +338,7 @@ export default function PublicEventPage() {
                     onClick={() => setActionMode('request_song')}
                     glowColor="pink"
                     className="w-full py-6 flex flex-col items-center gap-2"
+                    disabled={isEventBlocked}
                   >
                     <Music className="w-8 h-8" />
                     <span>Request a song</span>
@@ -324,6 +365,11 @@ export default function PublicEventPage() {
                     Back to choices
                   </button>
                 </div>
+                {actionError && (
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-3 mb-3">
+                    <p className="text-sm text-red-200">{actionError}</p>
+                  </div>
+                )}
                 {paymentValue && (
                   <div className="rounded-lg bg-white/10 border border-green-500/30 p-4 mb-4">
                     <p className="text-sm font-medium text-gray-300 mb-1">Payment</p>
@@ -368,6 +414,7 @@ export default function PublicEventPage() {
                             <p className="text-xs text-gray-400 mb-2">Then pay with MoMo (tip will be recorded)</p>
                             <button
                               type="button"
+                              disabled={isEventBlocked}
                               onClick={() => submitTipAndOpenTel(
                                 () => publicTipApi.submitTip({
                                   eventAccessToken: accessToken,
@@ -376,9 +423,18 @@ export default function PublicEventPage() {
                                   payerPhone: formData.payerPhone?.trim() || undefined,
                                 }),
                                 telUrl,
-                                setThankYou
+                                setThankYou,
+                                (msg) => {
+                                  const lower = msg.toLowerCase()
+                                  if (lower.includes('not active') || lower.includes('ended') || lower.includes('deleted')) {
+                                    setActionError(eventBlockedMessage || 'This event is no longer active.')
+                                  } else {
+                                    setActionError(msg)
+                                  }
+                                },
+                                true
                               )}
-                              className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation"
+                              className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                               <Smartphone className="w-5 h-5" />
                               Pay with MoMo — {safeAmount.toLocaleString()} RWF
@@ -453,6 +509,11 @@ export default function PublicEventPage() {
                     Back to choices
                   </button>
                 </div>
+                {actionError && (
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-3 mb-3">
+                    <p className="text-sm text-red-200">{actionError}</p>
+                  </div>
+                )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}

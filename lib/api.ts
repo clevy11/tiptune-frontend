@@ -20,6 +20,8 @@ import type {
   TipSubmitRequest,
   DjRevenueSummaryResponse,
   RevenueByDjResponse,
+  RevenueSeriesResponse,
+  TopSongResponse,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
@@ -227,6 +229,16 @@ export const djApi = {
     if (params?.to) sp.set('to', params.to)
     const q = sp.toString()
     const response = await api.get<DjRevenueSummaryResponse>(q ? `/dj/me/revenue-summary?${q}` : '/dj/me/revenue-summary')
+    return response.data
+  },
+
+  getTopSongs: async (params?: { from?: string; to?: string; limit?: number }): Promise<TopSongResponse[]> => {
+    const sp = new URLSearchParams()
+    if (params?.from) sp.set('from', params.from)
+    if (params?.to) sp.set('to', params.to)
+    if (params?.limit != null) sp.set('limit', String(params.limit))
+    const q = sp.toString()
+    const response = await api.get<TopSongResponse[]>(q ? `/dj/me/top-songs?${q}` : '/dj/me/top-songs')
     return response.data
   },
 
@@ -461,6 +473,38 @@ export const adminApi = {
     if (from) params.append('from', from)
     if (to) params.append('to', to)
     const response = await api.get<RevenueByDjResponse[]>(`/admin/analytics/revenue-by-dj?${params}`)
+    return response.data
+  },
+
+  getRevenueSeries: async (params?: {
+    djId?: number
+    fromDate?: string
+    toDate?: string
+    day?: string
+    interval?: 'day' | 'hour'
+  }): Promise<RevenueSeriesResponse> => {
+    const q = new URLSearchParams()
+    if (params?.djId != null) q.append('djId', String(params.djId))
+    if (params?.fromDate) q.append('fromDate', params.fromDate)
+    if (params?.toDate) q.append('toDate', params.toDate)
+    if (params?.day) q.append('day', params.day)
+    if (params?.interval) q.append('interval', params.interval)
+    const response = await api.get<RevenueSeriesResponse>(`/admin/analytics/revenue-series?${q}`)
+    return response.data
+  },
+
+  getTopSongs: async (params?: {
+    djId?: number
+    fromDate?: string
+    toDate?: string
+    limit?: number
+  }): Promise<TopSongResponse[]> => {
+    const q = new URLSearchParams()
+    if (params?.djId != null) q.append('djId', String(params.djId))
+    if (params?.fromDate) q.append('fromDate', params.fromDate)
+    if (params?.toDate) q.append('toDate', params.toDate)
+    if (params?.limit != null) q.append('limit', String(params.limit))
+    const response = await api.get<TopSongResponse[]>(`/admin/analytics/top-songs?${q}`)
     return response.data
   },
 }

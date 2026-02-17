@@ -359,6 +359,13 @@ export default function DjDashboardPage() {
       } else {
         useNotificationStore.getState().addNotification(notification)
       }
+
+      // If a tip arrives (e.g. permanent link tip), refresh revenue + tip list in real-time
+      const msg = (notification as any)?.message ? String((notification as any).message).toLowerCase() : ''
+      if (msg.includes('tip')) {
+        queryClient.invalidateQueries({ queryKey: ['dj-revenue-summary'] })
+        queryClient.invalidateQueries({ queryKey: ['dj-tip-records'] })
+      }
     }
 
     const timeoutId = setTimeout(() => {
@@ -369,13 +376,15 @@ export default function DjDashboardPage() {
       clearTimeout(timeoutId)
       websocketService.unsubscribeFromDjNotifications(currentUserId, handleNotification)
     }
-  }, [currentUserId, addSongRequestNotification])
+  }, [currentUserId, addSongRequestNotification, queryClient])
 
   useEffect(() => {
     if (!selectedEventId) return
     const handleRevenue = (_payload: EventRevenuePayload) => {
       queryClient.invalidateQueries({ queryKey: ['dj-events'] })
       queryClient.invalidateQueries({ queryKey: ['dj-requests', selectedEventId, apiFilter, requestSort] })
+      // Event tips affect DJ totals too
+      queryClient.invalidateQueries({ queryKey: ['dj-revenue-summary'] })
     }
     websocketService.subscribeToEventRevenue(selectedEventId, handleRevenue)
     return () => {

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GlowButton } from '@/components/GlowButton'
-import { Music } from 'lucide-react'
+import { Mail, MessageCircle, Music } from 'lucide-react'
 import { HeroSection } from '@/components/landing/HeroSection'
 import { NightlifeGallery } from '@/components/landing/NightlifeGallery'
 import { FeatureHighlight } from '@/components/landing/FeatureHighlight'
@@ -107,6 +107,44 @@ export default function Home() {
             </Link>
           </div>
         </motion.section>
+
+        {/* Contact / Footer */}
+        <section className="container mx-auto px-4 sm:px-6 pb-10 sm:pb-14">
+          <div className="rounded-2xl p-6 sm:p-8 bg-[#0B0F14]/70 border border-white/10">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white">Need help?</h3>
+                <p className="text-sm sm:text-base text-[#D1D5DB] mt-1">
+                  Contact us anytime — fast support and trusted communication.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://wa.me/250792548195"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 hover:border-[#00F5C3]/30 px-4 py-3 min-h-[48px] text-white transition-colors"
+                  aria-label="Contact us on WhatsApp"
+                >
+                  <MessageCircle className="w-5 h-5 text-[#00F5C3]" aria-hidden />
+                  WhatsApp: 0792548195
+                </a>
+                <a
+                  href="mailto:Buntulevycaleb@gmail.com"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 hover:border-[#00F5C3]/30 px-4 py-3 min-h-[48px] text-white transition-colors"
+                  aria-label="Email us"
+                >
+                  <Mail className="w-5 h-5 text-[#00F5C3]" aria-hidden />
+                  Email
+                </a>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-gray-400">
+              <span>© {new Date().getFullYear()} TipTune</span>
+              <span className="text-gray-500">Support: Buntulevycaleb@gmail.com</span>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )
