@@ -17,28 +17,36 @@ import { MusicSearchInput } from '@/components/music/MusicSearchInput'
 import { formatInRwanda } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/apiClient'
 
-type EventActionMode = 'choose' | 'tip_only' | 'request_song'
+type EventActionMode = 'choose' | 'tip_only' | 'request_song' | 'confirmation'
+type ConfirmationType = 'song_request' | 'tip_only' | null
 
 async function submitTipAndOpenTel(
   submit: () => Promise<void>,
   telUrl: string,
   setThankYou: (v: boolean) => void,
   onError?: (message: string) => void,
-  blockRedirectOnError: boolean = false
+  blockRedirectOnError: boolean = false,
+  setConfirmationType?: (type: ConfirmationType) => void,
+  setActionMode?: (mode: EventActionMode) => void
 ) {
   setThankYou(true)
   try {
     await submit()
+    // Show confirmation screen only on success
+    if (setConfirmationType) setConfirmationType('tip_only')
+    if (setActionMode) setActionMode('confirmation')
+    // Trigger payment dial after showing confirmation
+    setTimeout(() => {
+      window.location.href = telUrl
+    }, 1200)
   } catch (e) {
     const msg = getApiErrorMessage(e)
     console.error('Failed to record tip:', e)
     onError?.(msg)
     setThankYou(false)
+    // Don't show confirmation or trigger payment on error
     if (blockRedirectOnError) return
   }
-  setTimeout(() => {
-    window.location.href = telUrl
-  }, 1200)
 }
 
 export default function PublicEventPage() {
@@ -62,6 +70,8 @@ export default function PublicEventPage() {
   const [tipError, setTipError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [thankYou, setThankYou] = useState(false)
+  const [isTriggeringPayment, setIsTriggeringPayment] = useState(false)
+  const [confirmationType, setConfirmationType] = useState<ConfirmationType>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -97,8 +107,10 @@ export default function PublicEventPage() {
   const createMutation = useMutation({
     mutationFn: (data: PublicSongRequestCreateRequest) =>
       songRequestApi.createPublic(data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       setSuccess(true)
+      setConfirmationType('song_request')
+      setActionMode('confirmation')
       setFormData({
         songTitle: '',
         songArtist: '',
@@ -113,7 +125,18 @@ export default function PublicEventPage() {
       setTipError(null)
       setActionError(null)
       queryClient.invalidateQueries({ queryKey: ['requests', accessToken] })
-      setTimeout(() => setSuccess(false), 3000)
+      
+      // If user wanted to tip and payment info is available, trigger payment dial
+      if (variables.wantToTip && variables.tipAmount && paymentValue) {
+        setIsTriggeringPayment(true)
+        const safeAmount = Math.max(1, Math.min(500000, Math.floor(variables.tipAmount)))
+        const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
+        const telUrl = `tel:${ussd}`
+        // Delay slightly to show success message, then trigger payment
+        setTimeout(() => {
+          window.location.href = telUrl
+        }, 1200)
+      }
     },
     onError: (error: any) => {
       console.error('Failed to submit request:', error)
@@ -349,7 +372,7 @@ export default function PublicEventPage() {
           )}
 
           {/* Tip only form (no song request) */}
-          {actionMode === 'tip_only' && event && (
+          {actionMode === 'tip_only' && !confirmationType && event && (
             <GlassCard glow="green">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex items-center justify-between mb-4">
@@ -359,7 +382,13 @@ export default function PublicEventPage() {
                   </h2>
                   <button
                     type="button"
-                    onClick={() => setActionMode('choose')}
+                    onClick={() => {
+                      setActionMode('choose')
+                      setConfirmationType(null)
+                      setSuccess(false)
+                      setIsTriggeringPayment(false)
+                      setThankYou(false)
+                    }}
                     className="text-sm text-gray-400 hover:text-gray-300 underline"
                   >
                     Back to choices
@@ -432,7 +461,9 @@ export default function PublicEventPage() {
                                     setActionError(msg)
                                   }
                                 },
-                                true
+                                true,
+                                setConfirmationType,
+                                setActionMode
                               )}
                               className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation disabled:opacity-60 disabled:cursor-not-allowed"
                             >
@@ -469,27 +500,95 @@ export default function PublicEventPage() {
             </GlassCard>
           )}
 
-          {/* Success Message */}
-          <AnimatePresence>
-            {success && (
+          {/* Confirmation Screen */}
+          {actionMode === 'confirmation' && (
+            <GlassCard glow={confirmationType === 'song_request' ? 'pink' : 'green'} className="text-center">
               <motion.div
-                initial={{ opacity: 0, y: -20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="glass-strong rounded-xl p-6 glow-green border border-green-500/50"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="py-8 px-6"
               >
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-green-400" />
-                  <p className="text-green-400 font-semibold">
-                    Song request submitted successfully!
-                  </p>
-                </div>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+                  className="inline-block mb-6"
+                >
+                  <CheckCircle2 className={`w-20 h-20 mx-auto ${confirmationType === 'song_request' ? 'text-pink-400' : 'text-green-400'}`} />
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-3xl font-bold mb-3 text-gradient"
+                >
+                  {confirmationType === 'song_request' 
+                    ? 'Thank you for your request!'
+                    : 'Thank you for your tip!'}
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-gray-300 text-lg mb-6"
+                >
+                  {confirmationType === 'song_request'
+                    ? 'Your song request has been submitted successfully. The DJ will review it soon!'
+                    : 'Your tip has been recorded. Thank you for supporting the DJ!'}
+                </motion.p>
+                {isTriggeringPayment && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="rounded-lg bg-green-500/10 border border-green-500/30 p-4 mb-4"
+                  >
+                    <p className="text-sm text-green-300 font-medium">
+                      Opening payment dial...
+                    </p>
+                  </motion.div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col sm:flex-row gap-3 justify-center mt-6"
+                >
+                  <GlowButton
+                    type="button"
+                    onClick={() => {
+                      setActionMode('choose')
+                      setConfirmationType(null)
+                      setSuccess(false)
+                      setIsTriggeringPayment(false)
+                      setThankYou(false)
+                    }}
+                    glowColor={confirmationType === 'song_request' ? 'pink' : 'green'}
+                    variant="outline"
+                  >
+                    Make Another Request
+                  </GlowButton>
+                  <GlowButton
+                    type="button"
+                    onClick={() => {
+                      setActionMode('choose')
+                      setConfirmationType(null)
+                      setSuccess(false)
+                      setIsTriggeringPayment(false)
+                      setThankYou(false)
+                    }}
+                    glowColor="purple"
+                  >
+                    View Event
+                  </GlowButton>
+                </motion.div>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </GlassCard>
+          )}
 
           {/* Request Form (song request + optional tip) */}
-          {actionMode === 'request_song' && (
+          {actionMode === 'request_song' && !confirmationType && (
             <GlassCard glow="pink">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -503,7 +602,13 @@ export default function PublicEventPage() {
                   </h2>
                   <button
                     type="button"
-                    onClick={() => setActionMode('choose')}
+                    onClick={() => {
+                      setActionMode('choose')
+                      setConfirmationType(null)
+                      setIsTriggeringPayment(false)
+                      setSuccess(false)
+                      setThankYou(false)
+                    }}
                     className="text-sm text-gray-400 hover:text-gray-300 underline"
                   >
                     Back to choices
@@ -650,26 +755,23 @@ export default function PublicEventPage() {
                             className="w-full"
                           />
                         </div>
-                        {/* Pay with MoMo: tel link; amount sanitized 1–500000 */}
+                        {/* Payment info display (payment will be triggered automatically after submission) */}
                         {paymentValue && formData.tipAmount && (() => {
                           const raw = Number(formData.tipAmount)
                           const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
                           const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
-                          const telUrl = `tel:${ussd}`
                           const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
                           return (
                             <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">
-                              <p className="text-xs text-gray-400 mb-2">Then pay with MoMo</p>
-                              <a
-                                href={telUrl}
-                                className="inline-flex items-center gap-2 w-full justify-center rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium py-3 px-4 transition-colors min-h-[44px] touch-manipulation"
-                              >
-                                <Smartphone className="w-5 h-5" />
-                                Pay with MoMo — {safeAmount.toLocaleString()} RWF
-                              </a>
+                              <p className="text-xs text-gray-400 mb-2">
+                                Payment will be triggered automatically after submitting your request
+                              </p>
+                              <div className="text-sm text-green-300 font-medium mb-1">
+                                Amount: {safeAmount.toLocaleString()} RWF
+                              </div>
                               {!isMobile && (
                                 <p className="text-xs text-gray-500 mt-2">
-                                  On desktop: dial <span className="font-mono text-gray-400">{ussd}</span> on your phone.
+                                  On desktop: dial <span className="font-mono text-gray-400">{ussd}</span> on your phone when prompted.
                                 </p>
                               )}
                             </div>
@@ -699,8 +801,20 @@ export default function PublicEventPage() {
                   </motion.div>
                   {tipError && <p className="text-sm text-red-400 mt-2" role="alert">{tipError}</p>}
 
-                  <GlowButton type="submit" glowColor="pink" className="w-full min-h-[48px]">
-                    Submit request
+                  <GlowButton 
+                    type="submit" 
+                    glowColor="pink" 
+                    className="w-full min-h-[48px]"
+                    disabled={createMutation.isPending || isEventBlocked}
+                  >
+                    {createMutation.isPending ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⏳</span>
+                        {formData.wantToTip && formData.tipAmount ? 'Submitting & Preparing Payment...' : 'Submitting...'}
+                      </span>
+                    ) : (
+                      formData.wantToTip && formData.tipAmount ? 'Submit & Pay' : 'Submit Request'
+                    )}
                   </GlowButton>
                 </form>
               </motion.div>
