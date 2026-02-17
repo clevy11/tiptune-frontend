@@ -91,19 +91,6 @@ export default function PublicEventPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  const { data: requests } = useQuery({
-    queryKey: ['requests', accessToken],
-    queryFn: async () => {
-      try {
-        return await songRequestApi.getByAccessToken(accessToken)
-      } catch (err) {
-        console.error('Failed to fetch requests:', err)
-        return []
-      }
-    },
-    enabled: !!event && !isError,
-  })
-
   const createMutation = useMutation({
     mutationFn: (data: PublicSongRequestCreateRequest) =>
       songRequestApi.createPublic(data),
@@ -124,7 +111,6 @@ export default function PublicEventPage() {
       setSelectedSong(null)
       setTipError(null)
       setActionError(null)
-      queryClient.invalidateQueries({ queryKey: ['requests', accessToken] })
       
       // If user wanted to tip and payment info is available, trigger payment dial
       if (variables.wantToTip && variables.tipAmount && paymentValue) {
@@ -817,65 +803,6 @@ export default function PublicEventPage() {
                     )}
                   </GlowButton>
                 </form>
-              </motion.div>
-            </GlassCard>
-          )}
-
-          {/* Recent Requests */}
-          {actionMode === 'request_song' && requests && requests.length > 0 && (
-            <GlassCard glow="blue">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2 }}
-              >
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Music className="w-5 h-5" />
-                  Recent Requests
-                </h2>
-                <div className="space-y-3">
-                  <AnimatePresence>
-                    {requests.slice(0, 10).map((request, index) => (
-                      <motion.div
-                        key={request.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.3 + index * 0.1 }}
-                        className="glass rounded-lg p-4"
-                      >
-                        <div className="flex justify-between items-center gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium">
-                              {request.song.title} - {request.song.artist}
-                              {(Number(request.tipAmount) || 0) > 0 && (
-                                <span className="ml-2 inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">
-                                  <DollarSign className="w-3 h-3" />
-                                  {Number(request.tipAmount).toLocaleString()} RWF
-                                </span>
-                              )}
-                            </p>
-                            {request.message && (
-                              <p className="text-sm text-gray-400 mt-1">{request.message}</p>
-                            )}
-                          </div>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                              request.status === 'ACCEPTED'
-                                ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                                : request.status === 'DECLINED'
-                                ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                                : request.status === 'PLAYED'
-                                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                                : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
-                            }`}
-                          >
-                            {request.status}
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
               </motion.div>
             </GlassCard>
           )}
