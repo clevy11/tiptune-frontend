@@ -8,6 +8,11 @@ export const revalidate = 60
 export const metadata: Metadata = {
   title: 'TipTune - Turn Moments Into Music',
   description: 'Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({

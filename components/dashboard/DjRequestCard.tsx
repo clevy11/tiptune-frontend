@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { GlowButton } from '@/components/GlowButton'
-import { CheckCircle2, XCircle, PlayCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, PlayCircle, User } from 'lucide-react'
 import type { DjSongRequest } from '@/lib/types'
 import { RequestStatus } from '@/lib/types'
 
@@ -24,10 +24,15 @@ function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{request.songTitle}</p>
           <p className="text-sm text-gray-400 truncate">{request.songArtist}</p>
+          {request.requesterName && (
+            <div className="flex items-center gap-1.5 mt-2 mb-1">
+              <User className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+              <span className="text-sm font-medium text-purple-300">{request.requesterName}</span>
+            </div>
+          )}
           {request.message && (
             <p className="text-sm text-gray-500 mt-1 line-clamp-2">{request.message}</p>
           )}
-          <p className="text-xs text-gray-500 mt-1">Requested by {request.requesterName}</p>
         </div>
         <span
           className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium ${

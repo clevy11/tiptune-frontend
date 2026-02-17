@@ -1041,7 +1041,7 @@ export default function AdminDashboardPage() {
                   <div>
                     <h2 className="text-2xl font-bold text-gradient">Tip revenue analytics</h2>
                     <p className="text-sm text-gray-400">Trends, peak hours, DJ breakdown, and top requested songs.</p>
-                  </div>
+      </div>
                   <GlowButton
                     size="sm"
                     glowColor="green"
@@ -1069,7 +1069,7 @@ export default function AdminDashboardPage() {
                     <DollarSign className="w-4 h-4 mr-2" />
                     Export revenue by DJ
                   </GlowButton>
-                </div>
+    </div>
 
                 {/* Filters */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-6">

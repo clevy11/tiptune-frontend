@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle, QrCode, Download, FileDown } from 'lucide-react'
+import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle, QrCode, Download, FileDown, User } from 'lucide-react'
 import type { DjEvent, DjSongRequest, EventRequest, Notification, TipInfoResponse, TipRecordResponse, TipSettingsRequest, DjRevenueSummaryResponse } from '@/lib/types'
 import { EventStatus, RequestStatus, Role, TipPaymentType } from '@/lib/types'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
@@ -1774,10 +1774,15 @@ export default function DjDashboardPage() {
                               )}
                             </div>
                             <p className="text-sm text-gray-400">{request.songArtist}</p>
+                            {request.requesterName && (
+                              <div className="flex items-center gap-1.5 mt-2 mb-1">
+                                <User className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                                <span className="text-sm font-medium text-purple-300">{request.requesterName}</span>
+                              </div>
+                            )}
                             <p className="text-xs text-gray-500 mt-1">
-                              {request.requesterName}
-                              {request.payerPhone && ` · ${request.payerPhone}`}
-                              {' · '}{request.createdAt && formatInRwanda(request.createdAt)}
+                              {request.payerPhone && `${request.payerPhone} · `}
+                              {request.createdAt && formatInRwanda(request.createdAt)}
                             </p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
