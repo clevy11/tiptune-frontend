@@ -864,7 +864,7 @@ export default function DjDashboardPage() {
         </div>
       </MobileDrawer>
       
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-[100vw] overflow-x-hidden">
         {/* Header — mobile: hamburger + stacked; desktop: row */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -1104,9 +1104,9 @@ export default function DjDashboardPage() {
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Events List — hidden on mobile (use drawer); visible lg */}
-          <div className="hidden lg:block lg:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          {/* Events List — hidden on mobile (use drawer); visible from tablet (md) */}
+          <div className="hidden md:block md:col-span-1 min-w-0">
             <GlassCard glow="purple">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Music className="w-5 h-5 text-purple-400" />
@@ -1305,9 +1305,9 @@ export default function DjDashboardPage() {
           </div>
 
           {/* Event Details & Requests */}
-          <div className="lg:col-span-2">
-            {/* Mobile-only: compact revenue strip + collapsible Tip-only tips */}
-            <div className="lg:hidden mb-4">
+          <div className="md:col-span-2 min-w-0">
+            {/* Mobile-only: compact revenue strip + collapsible Tip-only tips (hidden from tablet up when sidebar is visible) */}
+            <div className="md:hidden mb-4">
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <GlassCard glow="green" className="p-3">
                   <p className="text-xs text-gray-400">Revenue</p>
