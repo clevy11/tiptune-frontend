@@ -435,10 +435,11 @@ export const adminApi = {
   },
 
   // Requests
-  getRequests: async (page: number = 0, size: number = 20, status?: string, eventId?: number, fromDate?: string, toDate?: string): Promise<{ content: AdminRequest[]; totalElements: number; totalPages: number; number: number }> => {
+  getRequests: async (page: number = 0, size: number = 20, status?: string, eventId?: number, djId?: number, fromDate?: string, toDate?: string): Promise<{ content: AdminRequest[]; totalElements: number; totalPages: number; number: number }> => {
     const params = new URLSearchParams({ page: page.toString(), size: size.toString() })
     if (status) params.append('status', status)
     if (eventId) params.append('eventId', eventId.toString())
+    if (djId != null) params.append('djId', djId.toString())
     if (fromDate) params.append('fromDate', fromDate)
     if (toDate) params.append('toDate', toDate)
     const response = await api.get<{ content: AdminRequest[]; totalElements: number; totalPages: number; number: number }>(`/admin/requests?${params}`)

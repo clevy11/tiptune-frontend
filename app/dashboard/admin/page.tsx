@@ -77,6 +77,9 @@ export default function AdminDashboardPage() {
   const [userRoleFilter, setUserRoleFilter] = useState<string>('')
   const [eventStatusFilter, setEventStatusFilter] = useState<string>('')
   const [requestStatusFilter, setRequestStatusFilter] = useState<string>('')
+  const [requestDateFrom, setRequestDateFrom] = useState<string>('')
+  const [requestDateTo, setRequestDateTo] = useState<string>('')
+  const [requestDjId, setRequestDjId] = useState<string>('') // "" = all DJs
   const [dateFrom, setDateFrom] = useState<string>('')
   const [dateTo, setDateTo] = useState<string>('')
   const [analyticsRange, setAnalyticsRange] = useState<'7' | '30' | '90' | 'custom'>('30')
@@ -142,10 +145,28 @@ export default function AdminDashboardPage() {
     gcTime: 5 * 60 * 1000,
   })
 
+  // DJ list for Requests tab filter (DJ + ARTIST roles)
+  const { data: djsForRequests } = useQuery({
+    queryKey: ['admin-users-djs'],
+    queryFn: async () => {
+      const [djRes, artistRes] = await Promise.all([
+        adminApi.getUsers(0, 100, 'DJ'),
+        adminApi.getUsers(0, 100, 'ARTIST'),
+      ])
+      const byId = new Map<number, User>()
+      djRes.content.forEach((u) => byId.set(u.id, u))
+      artistRes.content.forEach((u) => byId.set(u.id, u))
+      return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name))
+    },
+    enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'requests',
+    staleTime: 5 * 60 * 1000,
+  })
+
   // Requests
+  const requestDjIdNum = requestDjId ? Number(requestDjId) : undefined
   const { data: requestsData, isLoading: requestsLoading } = useQuery({
-    queryKey: ['admin-requests', requestPage, requestStatusFilter, dateFrom, dateTo],
-    queryFn: () => adminApi.getRequests(requestPage, pageSize, requestStatusFilter || undefined, undefined, dateFrom || undefined, dateTo || undefined),
+    queryKey: ['admin-requests', requestPage, requestStatusFilter, requestDjIdNum, requestDateFrom, requestDateTo],
+    queryFn: () => adminApi.getRequests(requestPage, pageSize, requestStatusFilter || undefined, undefined, requestDjIdNum, requestDateFrom || undefined, requestDateTo || undefined),
     enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'requests',
     staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -957,9 +978,43 @@ export default function AdminDashboardPage() {
         {activeTab === 'requests' && (
           <GlassCard glow="pink" noEnterAnimation>
             <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col gap-4 mb-6">
                 <h2 className="text-2xl font-bold text-gradient">Requests</h2>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-gray-400">Filters:</span>
+                  <select
+                    value={requestDjId}
+                    onChange={(e) => {
+                      setRequestDjId(e.target.value)
+                      setRequestPage(0)
+                    }}
+                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-300 min-w-[160px]"
+                    title="Filter by DJ"
+                  >
+                    <option value="">All DJs</option>
+                    {djsForRequests?.map((dj) => (
+                      <option key={dj.id} value={dj.id}>{dj.name}</option>
+                    ))}
+                  </select>
+                  <DatePicker
+                    value={requestDateFrom}
+                    onChange={(v) => {
+                      setRequestDateFrom(v)
+                      setRequestPage(0)
+                    }}
+                    placeholder="From date"
+                    className="w-40"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <DatePicker
+                    value={requestDateTo}
+                    onChange={(v) => {
+                      setRequestDateTo(v)
+                      setRequestPage(0)
+                    }}
+                    placeholder="To date"
+                    className="w-40"
+                  />
                   <select
                     value={requestStatusFilter}
                     onChange={(e) => {
@@ -973,6 +1028,19 @@ export default function AdminDashboardPage() {
                       <option key={status} value={status}>{status}</option>
                     ))}
                   </select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRequestDjId('')
+                      setRequestDateFrom('')
+                      setRequestDateTo('')
+                      setRequestStatusFilter('')
+                      setRequestPage(0)
+                    }}
+                  >
+                    Clear filters
+                  </Button>
                 </div>
               </div>
 
