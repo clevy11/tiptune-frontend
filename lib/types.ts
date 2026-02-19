@@ -290,3 +290,27 @@ export interface MusicSearchResult {
 export interface MusicSearchResponse {
   results: MusicSearchResult[]
 }
+
+// Email Broadcast types
+export interface EmailBroadcastRequest {
+  recipientType: 'ALL' | 'ROLE' | 'SELECTED'
+  recipientRole?: string
+  recipientIds?: number[]
+  subject: string
+  content: string
+}
+
+export interface EmailBroadcastLog {
+  id: number
+  adminId: number
+  subject: string
+  content: string
+  recipientType: string
+  recipientRole?: string
+  recipientCount: number
+  successCount: number
+  failedCount: number
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  createdAt: string
+  completedAt?: string
+}

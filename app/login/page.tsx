@@ -147,14 +147,24 @@ export default function LoginPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-center mt-6"
+            className="text-center mt-6 space-y-2"
           >
-            <Link
-              href="/register"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              Don&apos;t have an account? Register
-            </Link>
+            <div>
+              <Link
+                href="/forgot-password"
+                className="text-sm text-gray-400 hover:text-purple-400 transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+            <div>
+              <Link
+                href="/register"
+                className="text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Don&apos;t have an account? Register
+              </Link>
+            </div>
           </motion.div>
         </GlassCard>
       </motion.div>

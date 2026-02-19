@@ -22,6 +22,8 @@ import type {
   RevenueByDjResponse,
   RevenueSeriesResponse,
   TopSongResponse,
+  EmailBroadcastRequest,
+  EmailBroadcastLog,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
@@ -127,6 +129,16 @@ export const authApi = {
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('user', JSON.stringify(response.data.user))
     }
+    return response.data
+  },
+
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/auth/forgot-password', { email })
+    return response.data
+  },
+
+  resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/auth/reset-password', { token, newPassword })
     return response.data
   },
 
@@ -506,6 +518,23 @@ export const adminApi = {
     if (params?.toDate) q.append('toDate', params.toDate)
     if (params?.limit != null) q.append('limit', String(params.limit))
     const response = await api.get<TopSongResponse[]>(`/admin/analytics/top-songs?${q}`)
+    return response.data
+  },
+
+  // Email Broadcast
+  sendEmailBroadcast: async (data: EmailBroadcastRequest): Promise<{ broadcastId: number; message: string; estimatedRecipients: number; status: string }> => {
+    const response = await api.post(`/admin/broadcast/email`, data)
+    return response.data
+  },
+
+  getBroadcastLogs: async (page: number = 0, size: number = 20): Promise<{ content: EmailBroadcastLog[]; totalElements: number; totalPages: number; number: number }> => {
+    const params = new URLSearchParams({ page: page.toString(), size: size.toString() })
+    const response = await api.get<{ content: EmailBroadcastLog[]; totalElements: number; totalPages: number; number: number }>(`/admin/broadcast/logs?${params}`)
+    return response.data
+  },
+
+  getBroadcastLog: async (id: number): Promise<EmailBroadcastLog> => {
+    const response = await api.get<EmailBroadcastLog>(`/admin/broadcast/${id}`)
     return response.data
   },
 }

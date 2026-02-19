@@ -25,9 +25,11 @@ import {
   Check,
   AlertCircle,
   DollarSign,
-  Maximize2
+  Maximize2,
+  Mail,
+  Send
 } from 'lucide-react'
-import type { User, AdminEvent, AdminRequest, RevenueByDjResponse, RevenueSeriesResponse, TopSongResponse } from '@/lib/types'
+import type { User, AdminEvent, AdminRequest, RevenueByDjResponse, RevenueSeriesResponse, TopSongResponse, EmailBroadcastLog } from '@/lib/types'
 import { Role, EventStatus, RequestStatus } from '@/lib/types'
 import { DashboardProfile } from '@/components/dashboard/DashboardProfile'
 import { getCurrentUser } from '@/lib/auth'
@@ -64,10 +66,18 @@ export default function AdminDashboardPage() {
   const queryClient = useQueryClient()
   const mounted = useMounted()
   const [profileUser, setProfileUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'events' | 'requests' | 'revenue'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'events' | 'requests' | 'revenue' | 'broadcast'>('overview')
   const [revenueFrom, setRevenueFrom] = useState('')
   const [revenueTo, setRevenueTo] = useState('')
   const [revenueDjId, setRevenueDjId] = useState<string>('') // "" = all DJs
+  // Broadcast state
+  const [broadcastRecipientType, setBroadcastRecipientType] = useState<'ALL' | 'ROLE' | 'SELECTED'>('ALL')
+  const [broadcastRecipientRole, setBroadcastRecipientRole] = useState<string>('')
+  const [broadcastRecipientIds, setBroadcastRecipientIds] = useState<number[]>([])
+  const [broadcastSubject, setBroadcastSubject] = useState('')
+  const [broadcastContent, setBroadcastContent] = useState('')
+  const [broadcastLogsPage, setBroadcastLogsPage] = useState(0)
+
   const [revenueInterval, setRevenueInterval] = useState<'day' | 'hour'>('day')
   const [revenueDay, setRevenueDay] = useState<string>('') // YYYY-MM-DD; forces hourly view
   const [error, setError] = useState<string | null>(null)
@@ -207,6 +217,44 @@ export default function AdminDashboardPage() {
     enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'revenue',
     staleTime: 60 * 1000,
   })
+
+  // Broadcast mutations and queries
+  const sendBroadcastMutation = useMutation({
+    mutationFn: adminApi.sendEmailBroadcast,
+    onSuccess: () => {
+      setBroadcastSubject('')
+      setBroadcastContent('')
+      setBroadcastRecipientType('ALL')
+      setBroadcastRecipientRole('')
+      setBroadcastRecipientIds([])
+      queryClient.invalidateQueries({ queryKey: ['admin-broadcast-logs'] })
+    },
+  })
+
+  const { data: broadcastLogsData, isLoading: logsLoading } = useQuery({
+    queryKey: ['admin-broadcast-logs', broadcastLogsPage],
+    queryFn: () => adminApi.getBroadcastLogs(broadcastLogsPage, 20),
+    enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'broadcast',
+  })
+
+  // Fetch DJs and Artists for recipient selection
+  const { data: djsData } = useQuery({
+    queryKey: ['admin-users-djs'],
+    queryFn: () => adminApi.getUsers(0, 1000, 'DJ'),
+    enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'broadcast' && broadcastRecipientType === 'SELECTED',
+  })
+
+  const { data: artistsData } = useQuery({
+    queryKey: ['admin-users-artists'],
+    queryFn: () => adminApi.getUsers(0, 1000, 'ARTIST'),
+    enabled: !!currentUser && currentUser.role === Role.SUPER_ADMIN && activeTab === 'broadcast' && broadcastRecipientType === 'SELECTED',
+  })
+
+  // Combine DJs and Artists for selection
+  const availableUsers = [
+    ...(djsData?.content || []),
+    ...(artistsData?.content || []),
+  ]
 
   const OverviewTopDjsContent = () => (
     <div className="space-y-3">
@@ -520,7 +568,7 @@ export default function AdminDashboardPage() {
 
         {/* Tabs — wrap on mobile, touch-friendly */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {(['overview', 'users', 'events', 'requests', 'revenue'] as const).map((tab) => (
+          {(['overview', 'users', 'events', 'requests', 'revenue', 'broadcast'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -1464,6 +1512,254 @@ export default function AdminDashboardPage() {
       >
         <RevenueBreakdownContent large />
       </FullScreenOverlay>
+
+      {/* Broadcast Tab */}
+      {activeTab === 'broadcast' && (
+        <div className="space-y-6">
+          {/* Send Broadcast Form */}
+          <GlassCard glow="purple" noEnterAnimation>
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gradient mb-2">Send Email Broadcast</h2>
+              <p className="text-sm text-gray-400 mb-6">Send emails to selected users or all users</p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!broadcastSubject.trim() || !broadcastContent.trim()) {
+                    setError('Subject and content are required')
+                    return
+                  }
+                  sendBroadcastMutation.mutate({
+                    recipientType: broadcastRecipientType,
+                    recipientRole: broadcastRecipientType === 'ROLE' ? broadcastRecipientRole : undefined,
+                    recipientIds: broadcastRecipientType === 'SELECTED' ? broadcastRecipientIds : undefined,
+                    subject: broadcastSubject.trim(),
+                    content: broadcastContent.trim(),
+                  })
+                }}
+                className="space-y-4"
+              >
+                    {/* Recipient Type */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Recipients</label>
+                      <select
+                        value={broadcastRecipientType}
+                        onChange={(e) => {
+                          const newType = e.target.value as 'ALL' | 'ROLE' | 'SELECTED'
+                          setBroadcastRecipientType(newType)
+                          setBroadcastRecipientRole('')
+                          setBroadcastRecipientIds([]) // Clear selected IDs when switching types
+                        }}
+                        className="w-full rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 min-h-[44px]"
+                      >
+                        <option value="ALL">All Users</option>
+                        <option value="ROLE">By Role</option>
+                        <option value="SELECTED">Selected Users</option>
+                      </select>
+                    </div>
+
+                    {/* Role Selector */}
+                    {broadcastRecipientType === 'ROLE' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
+                        <select
+                          value={broadcastRecipientRole}
+                          onChange={(e) => setBroadcastRecipientRole(e.target.value)}
+                          className="w-full rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 min-h-[44px]"
+                          required
+                        >
+                          <option value="">Select role...</option>
+                          <option value="USER">User</option>
+                          <option value="DJ">DJ</option>
+                          <option value="ARTIST">Artist</option>
+                          <option value="SUPER_ADMIN">Super Admin</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Selected Users - Multi-select dropdown */}
+                    {broadcastRecipientType === 'SELECTED' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Select DJs & Artists
+                        </label>
+                        <select
+                          multiple
+                          value={broadcastRecipientIds.map(String)}
+                          onChange={(e) => {
+                            const selectedIds = Array.from(e.target.selectedOptions, (option) => parseInt(option.value))
+                            setBroadcastRecipientIds(selectedIds)
+                          }}
+                          className="w-full rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 min-h-[120px]"
+                          required={broadcastRecipientType === 'SELECTED'}
+                        >
+                          {availableUsers.length === 0 ? (
+                            <option disabled>Loading users...</option>
+                          ) : (
+                            <>
+                              {djsData?.content && djsData.content.length > 0 && (
+                                <optgroup label="DJs">
+                                  {djsData.content.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                      {user.name} ({user.email}) - DJ
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {artistsData?.content && artistsData.content.length > 0 && (
+                                <optgroup label="Artists">
+                                  {artistsData.content.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                      {user.name} ({user.email}) - Artist
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {availableUsers.length === 0 && (
+                                <option disabled>No DJs or Artists found</option>
+                              )}
+                            </>
+                          )}
+                        </select>
+                        {broadcastRecipientIds.length > 0 && (
+                          <p className="text-xs text-gray-400 mt-2">
+                            {broadcastRecipientIds.length} user{broadcastRecipientIds.length !== 1 ? 's' : ''} selected
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          Hold Ctrl (Cmd on Mac) to select multiple users
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Subject */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Subject</label>
+                      <Input
+                        type="text"
+                        placeholder="Email subject"
+                        value={broadcastSubject}
+                        onChange={(e) => setBroadcastSubject(e.target.value)}
+                        maxLength={500}
+                        required
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Content (HTML supported)</label>
+                      <textarea
+                        value={broadcastContent}
+                        onChange={(e) => setBroadcastContent(e.target.value)}
+                        placeholder="Email content..."
+                        rows={10}
+                        maxLength={50000}
+                        required
+                        className="w-full rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 resize-y"
+                      />
+                    </div>
+
+                    {/* Submit */}
+                    <GlowButton
+                      type="submit"
+                      glowColor="purple"
+                      className="w-full"
+                      disabled={sendBroadcastMutation.isPending}
+                    >
+                      {sendBroadcastMutation.isPending ? (
+                        'Sending...'
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Send Broadcast
+                        </>
+                      )}
+                    </GlowButton>
+              </form>
+            </div>
+          </GlassCard>
+
+          {/* Broadcast Logs */}
+          <GlassCard glow="blue" noEnterAnimation>
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold text-gradient mb-2">Broadcast History</h2>
+                  <p className="text-sm text-gray-400 mb-6">View past email broadcasts</p>
+
+                  {logsLoading ? (
+                    <div className="text-center py-8 text-gray-400">Loading...</div>
+                  ) : broadcastLogsData?.content?.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">No broadcast logs yet</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {broadcastLogsData?.content?.map((log: EmailBroadcastLog) => (
+                        <div
+                          key={log.id}
+                          className="p-4 rounded-lg bg-white/5 border border-white/10"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                            <div>
+                              <h3 className="font-semibold text-white">{log.subject}</h3>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {log.recipientType === 'ALL' && 'All Users'}
+                                {log.recipientType === 'ROLE' && `Role: ${log.recipientRole}`}
+                                {log.recipientType === 'SELECTED' && 'Selected Users'}
+                                {' • '}
+                                {log.recipientCount} recipients
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                  log.status === 'COMPLETED'
+                                    ? 'bg-green-500/20 text-green-400'
+                                    : log.status === 'FAILED'
+                                    ? 'bg-red-500/20 text-red-400'
+                                    : 'bg-yellow-500/20 text-yellow-400'
+                                }`}
+                              >
+                                {log.status}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-xs text-gray-400 mt-2">
+                            <span>Success: {log.successCount}</span>
+                            <span>Failed: {log.failedCount}</span>
+                            <span>{new Date(log.createdAt).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Pagination */}
+                      {broadcastLogsData && broadcastLogsData.totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 mt-6">
+                          <button
+                            type="button"
+                            onClick={() => setBroadcastLogsPage((p) => Math.max(0, p - 1))}
+                            disabled={broadcastLogsPage === 0}
+                            className="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-sm text-gray-400">
+                            Page {broadcastLogsPage + 1} of {broadcastLogsData.totalPages}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setBroadcastLogsPage((p) => p + 1)}
+                            disabled={broadcastLogsPage >= broadcastLogsData.totalPages - 1}
+                            className="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </GlassCard>
+        </div>
+      )}
     </div>
   )
 }
