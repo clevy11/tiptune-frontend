@@ -130,7 +130,7 @@ export default function Home() {
                   WhatsApp: 0792548195
                 </a>
                 <a
-                  href="mailto:Buntulevycaleb@gmail.com"
+                  href="mailto:titunerw@gmail.com"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 hover:border-[#00F5C3]/30 px-4 py-3 min-h-[48px] text-white transition-colors"
                   aria-label="Email us"
                 >
@@ -141,7 +141,7 @@ export default function Home() {
             </div>
             <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-gray-400">
               <span>© {new Date().getFullYear()} TipTune</span>
-              <span className="text-gray-500">Support: Buntulevycaleb@gmail.com</span>
+              <span className="text-gray-500">Support: titunerw@gmail.com</span>
             </div>
           </div>
         </section>
