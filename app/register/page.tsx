@@ -150,8 +150,8 @@ export default function RegisterPage() {
                   setFormData({ ...formData, role: e.target.value as Role })
                 }
               >
-                <option value={Role.USER}>User</option>
                 <option value={Role.DJ}>DJ</option>
+                <option value={Role.USER}>User</option>
               </select>
             </motion.div>
 
