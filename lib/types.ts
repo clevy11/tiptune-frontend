@@ -24,11 +24,36 @@ export enum TipPaymentType {
   PHONE_NUMBER = 'PHONE_NUMBER',
 }
 
+/** DJ profile link type (Instagram, Mixcloud, website, or custom). */
+export enum ProfileLinkType {
+  INSTAGRAM = 'INSTAGRAM',
+  MIXCLOUD = 'MIXCLOUD',
+  WEBSITE = 'WEBSITE',
+  CUSTOM = 'CUSTOM',
+}
+
+export interface ProfileLinkResponse {
+  id: number
+  linkType: ProfileLinkType
+  label?: string
+  url: string
+  displayOrder: number
+}
+
+export interface ProfileLinkRequest {
+  id?: number
+  linkType: ProfileLinkType
+  label?: string
+  url: string
+  displayOrder?: number
+}
+
 export interface User {
   id: number
   name: string
   email: string
   role: Role
+  profileLinks?: ProfileLinkResponse[]
 }
 
 export interface Event {

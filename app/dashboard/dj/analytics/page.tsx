@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, BarChart3, DollarSign, FileDown, Maximize2, Music } from 'lucide-react'
+import { ArrowLeft, BarChart3, DollarSign, Maximize2, Music } from 'lucide-react'
 import { DashboardBackground } from '@/components/theme/DashboardBackground'
 import { GlassCard } from '@/components/GlassCard'
-import { GlowButton } from '@/components/GlowButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { djApi } from '@/lib/api'
@@ -17,6 +16,7 @@ import { shouldRedirect } from '@/lib/roleGuard'
 import { useMounted } from '@/hooks/useMounted'
 import { Role } from '@/lib/types'
 import { FullScreenOverlay } from '@/components/ui/FullScreenOverlay'
+import { ReportExport } from '@/components/export/ReportExport'
 
 export default function DjAnalyticsPage() {
   const router = useRouter()
@@ -56,37 +56,42 @@ export default function DjAnalyticsPage() {
     staleTime: 60 * 1000,
   })
 
-  const handleDownload = async () => {
-    const data = await djApi.getRevenueSummary(
-      from || to ? { from: from || undefined, to: to || undefined } : undefined
-    )
-    const rows: string[] = [
-      'Total Revenue (RWF),Song Request Revenue (RWF),Standalone Tip Revenue (RWF),Tip-only Records',
-    ]
-    rows.push(
-      `${Number(data.totalRevenue).toLocaleString()},${Number(data.songRequestRevenue).toLocaleString()},${Number(data.standaloneTipRevenue).toLocaleString()},${data.tipRecordCount}`
-    )
-    if (data.revenueByDay && data.revenueByDay.length > 0) {
-      rows.push('')
-      rows.push('Date,Revenue (RWF)')
-      data.revenueByDay.forEach((d) =>
-        rows.push(`${d.date},${Number(d.revenue).toLocaleString()}`)
-      )
+  const analyticsReportSummary = useMemo(
+    () => [
+      { label: 'Total revenue (RWF)', value: summary ? Number(summary.totalRevenue).toLocaleString() : '0' },
+      { label: 'Song request revenue (RWF)', value: summary ? Number(summary.songRequestRevenue).toLocaleString() : '0' },
+      { label: 'Standalone tip revenue (RWF)', value: summary ? Number(summary.standaloneTipRevenue).toLocaleString() : '0' },
+      { label: 'Tip-only records', value: summary?.tipRecordCount ?? 0 },
+      { label: 'Period', value: from && to ? `${from} – ${to}` : 'All time' },
+    ],
+    [summary, from, to]
+  )
+
+  const analyticsReportTables = useMemo(() => {
+    const tables: { title: string; headers: string[]; rows: (string | number)[][] }[] = []
+    if (summary?.revenueByDay?.length) {
+      tables.push({
+        title: 'Revenue by day',
+        headers: ['Date', 'Revenue (RWF)'],
+        rows: summary.revenueByDay.map((d) => [d.date, Number(d.revenue).toLocaleString()]),
+      })
     }
-    if (data.revenueByHour && data.revenueByHour.length > 0) {
-      rows.push('')
-      rows.push('Hour,Revenue (RWF)')
-      data.revenueByHour.forEach((h) =>
-        rows.push(`${h.hour},${Number(h.revenue).toLocaleString()}`)
-      )
+    if (summary?.revenueByHour?.length) {
+      tables.push({
+        title: 'Revenue by hour',
+        headers: ['Hour', 'Revenue (RWF)'],
+        rows: summary.revenueByHour.map((h) => [h.hour, Number(h.revenue).toLocaleString()]),
+      })
     }
-    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `revenue-report${from && to ? `-${from}-${to}` : ''}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
+    if (topSongs?.length) {
+      tables.push({
+        title: 'Top requested songs',
+        headers: ['#', 'Title', 'Artist', 'Requests'],
+        rows: topSongs.map((s, i) => [i + 1, s.title, s.artist, s.requestCount]),
+      })
+    }
+    return tables
+  }, [summary, topSongs])
 
   const chartPoints = (() => {
     if (!summary) return []
@@ -218,6 +223,12 @@ export default function DjAnalyticsPage() {
               <h1 className="text-xl sm:text-2xl font-bold text-white">Revenue analytics</h1>
             </div>
           </div>
+          <ReportExport
+            title="Revenue Report"
+            summary={analyticsReportSummary}
+            tables={analyticsReportTables}
+            className="flex-shrink-0"
+          />
         </div>
 
         <div className="max-w-2xl space-y-6">
@@ -247,10 +258,6 @@ export default function DjAnalyticsPage() {
               <Button variant="outline" size="sm" onClick={() => { setFrom(''); setTo('') }}>
                 Clear dates
               </Button>
-              <GlowButton size="sm" glowColor="green" onClick={handleDownload}>
-                <FileDown className="w-4 h-4 mr-2" />
-                Download report
-              </GlowButton>
             </div>
           </GlassCard>
 

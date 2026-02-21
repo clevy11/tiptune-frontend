@@ -10,9 +10,10 @@ import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone } from 'lucide-react'
-import type { Event, PublicSongRequestCreateRequest, MusicSearchResult } from '@/lib/types'
-import { EventStatus, TipPaymentType } from '@/lib/types'
+import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
+import { SiInstagram, SiMixcloud } from 'react-icons/si'
+import type { Event, PublicSongRequestCreateRequest, MusicSearchResult, ProfileLinkResponse } from '@/lib/types'
+import { EventStatus, TipPaymentType, ProfileLinkType } from '@/lib/types'
 import { MusicSearchInput } from '@/components/music/MusicSearchInput'
 import { formatInRwanda } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/apiClient'
@@ -309,6 +310,52 @@ export default function PublicEventPage() {
               </span>
             </motion.div>
           </GlassCard>
+
+          {/* DJ info & socials */}
+          {event.createdBy && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="flex flex-col items-center gap-3 text-center"
+            >
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-medium">Your host</p>
+                <p className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 shrink-0" aria-hidden />
+                  {event.createdBy.name}
+                </p>
+              </div>
+              {event.createdBy.profileLinks && event.createdBy.profileLinks.length > 0 && (
+                <div className="flex flex-col items-center gap-2 w-full max-w-md">
+                  <p className="text-xs text-gray-500 font-medium">Their socials</p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {event.createdBy.profileLinks.map((link: ProfileLinkResponse) => {
+                      const label = link.linkType === ProfileLinkType.CUSTOM && link.label ? link.label : link.linkType.charAt(0) + link.linkType.slice(1).toLowerCase()
+                      const Icon =
+                        link.linkType === ProfileLinkType.INSTAGRAM ? SiInstagram
+                        : link.linkType === ProfileLinkType.MIXCLOUD ? SiMixcloud
+                        : link.linkType === ProfileLinkType.WEBSITE ? Globe
+                        : Link2
+                      return (
+                        <a
+                          key={link.id}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-purple-500/30 border border-white/20 hover:border-purple-500/50 px-4 py-2.5 text-sm font-medium text-gray-200 hover:text-white transition-colors"
+                        >
+                          <Icon className="w-4 h-4 shrink-0 text-purple-400" aria-hidden />
+                          <span>{label}</span>
+                          <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" aria-hidden />
+                        </a>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Event availability banner */}
           {isEventBlocked && (

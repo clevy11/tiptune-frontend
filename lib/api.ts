@@ -24,6 +24,8 @@ import type {
   TopSongResponse,
   EmailBroadcastRequest,
   EmailBroadcastLog,
+  ProfileLinkResponse,
+  ProfileLinkRequest,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
@@ -251,6 +253,26 @@ export const djApi = {
     if (params?.limit != null) sp.set('limit', String(params.limit))
     const q = sp.toString()
     const response = await api.get<TopSongResponse[]>(q ? `/dj/me/top-songs?${q}` : '/dj/me/top-songs')
+    return response.data
+  },
+
+  getMyProfile: async (): Promise<User> => {
+    const response = await api.get<User>('/dj/me/profile')
+    return response.data
+  },
+
+  updateMyProfile: async (data: { name: string }): Promise<User> => {
+    const response = await api.put<User>('/dj/me/profile', data)
+    return response.data
+  },
+
+  getProfileLinks: async (): Promise<ProfileLinkResponse[]> => {
+    const response = await api.get<ProfileLinkResponse[]>('/dj/me/profile-links')
+    return response.data
+  },
+
+  updateProfileLinks: async (links: ProfileLinkRequest[]): Promise<ProfileLinkResponse[]> => {
+    const response = await api.put<ProfileLinkResponse[]>('/dj/me/profile-links', links)
     return response.data
   },
 

@@ -28,8 +28,7 @@ import { ErrorMessage, FieldErrorWrapper } from '@/components/ui/ErrorMessage'
 import { MobileDrawer } from '@/components/ui/MobileDrawer'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { QRDownload } from '@/components/export/QRDownload'
-import { sanitizeEventNameForFile, formatInRwanda, formatDateInRwanda } from '@/lib/utils'
-import { ReportExport } from '@/components/export/ReportExport'
+import { sanitizeEventNameForFile, formatInRwanda } from '@/lib/utils'
 
 // Memoized EventCard to prevent unnecessary re-renders
 const EventCard = memo(({ 
@@ -632,54 +631,6 @@ export default function DjDashboardPage() {
     return { totalTipRevenue: total, tippedCount: count, highestTip: highest, lowestTip: lowest, avgTip: avg }
   }, [events, requests])
 
-  const djReportSummary = useMemo(() => [
-    { label: 'Total revenue (RWF)', value: totalTipRevenue.toLocaleString() },
-    { label: 'Total events', value: events?.length ?? 0 },
-    { label: 'Total requests', value: requests?.length ?? 0 },
-    { label: 'Total tipped requests', value: tippedCount },
-    { label: 'Average tip (RWF)', value: avgTip.toLocaleString() },
-    { label: 'Highest tip (RWF)', value: highestTip.toLocaleString() },
-    { label: 'Lowest tip (RWF)', value: lowestTip === Infinity ? '0' : lowestTip.toLocaleString() },
-    { label: 'Pending', value: requests?.filter((r) => r.status === RequestStatus.PENDING).length ?? 0 },
-    { label: 'Accepted', value: requests?.filter((r) => r.status === RequestStatus.ACCEPTED).length ?? 0 },
-    { label: 'Played', value: requests?.filter((r) => r.status === RequestStatus.PLAYED).length ?? 0 },
-    { label: 'Declined', value: requests?.filter((r) => r.status === RequestStatus.DECLINED).length ?? 0 },
-  ], [totalTipRevenue, events, requests, tippedCount, avgTip, highestTip, lowestTip])
-
-  const djReportTables = useMemo(() => {
-    const tables: { title: string; headers: string[]; rows: (string | number)[][] }[] = []
-    if (events?.length) {
-      tables.push({
-        title: 'Events (with revenue)',
-        headers: ['Event Name', 'Start', 'Status', 'Requests', 'Tip revenue (RWF)'],
-        rows: events.map((e) => [
-          e.name,
-          formatDateInRwanda(e.startTime),
-          e.status,
-          e.requestCount ?? 0,
-          (e.totalTipRevenue != null ? Number(e.totalTipRevenue).toLocaleString() : '0'),
-        ]),
-      })
-    }
-    if (requests?.length) {
-      tables.push({
-        title: 'Song Requests (detailed)',
-        headers: ['Song', 'Artist', 'Requester', 'Phone', 'Tip (RWF)', 'Status', 'Created', 'Event'],
-        rows: requests.map((r) => [
-          r.songTitle ?? '',
-          r.songArtist ?? '',
-          r.requesterName ?? '',
-          r.payerPhone ?? '',
-          r.tipAmount != null ? Number(r.tipAmount).toLocaleString() : '0',
-          r.status,
-          r.createdAt ? formatInRwanda(r.createdAt) : '',
-          r.eventName ?? '',
-        ]),
-      })
-    }
-    return tables
-  }, [events, requests])
-
   // Consistent placeholder until mounted to avoid hydration mismatch
   if (!mounted) {
     return (
@@ -862,6 +813,16 @@ export default function DjDashboardPage() {
             </div>
           )}
         </div>
+        <div className="p-4 border-t border-white/10">
+          <Link
+            href="/dashboard/dj/profile"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2 text-gray-200 hover:text-white transition-colors"
+          >
+            <User className="w-4 h-4 text-purple-400" />
+            My profile & links
+          </Link>
+        </div>
       </MobileDrawer>
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-[100vw] overflow-x-hidden">
@@ -880,13 +841,35 @@ export default function DjDashboardPage() {
             >
               <Menu className="w-6 h-6 text-purple-300" />
             </button>
-            <div className="flex items-center gap-3">
-              <Music className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400" aria-hidden />
-              <h1 className="text-xl sm:text-3xl font-bold text-gradient">DJ Control Panel</h1>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs uppercase tracking-wider text-gray-500 font-medium pl-10 sm:pl-0">
+                DJ Control Panel
+              </p>
+              <div className="flex items-center gap-3">
+                <Music className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400 shrink-0" aria-hidden />
+                {currentUser?.name ? (
+                  <Link
+                    href="/dashboard/dj/profile"
+                    className="text-xl sm:text-3xl font-bold text-gradient hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded"
+                    aria-label="Go to profile"
+                  >
+                    {currentUser.name}
+                  </Link>
+                ) : (
+                  <span className="text-xl sm:text-3xl font-bold text-gradient">DJ Control Panel</span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <NotificationBell />
+            <Link
+              href="/dashboard/dj/profile"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-white/20 hover:bg-white/15 px-3 py-2 text-sm font-medium text-gray-200 min-h-[44px] touch-manipulation transition-colors"
+            >
+              <User className="w-4 h-4 text-purple-400" />
+              Profile
+            </Link>
             <Link
               href="/dashboard/dj/analytics"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-white/20 hover:bg-white/15 px-3 py-2 text-sm font-medium text-gray-200 min-h-[44px] touch-manipulation transition-colors"
@@ -905,7 +888,6 @@ export default function DjDashboardPage() {
               <Plus className="w-4 h-4 mr-2" />
               Create Event
             </GlowButton>
-            <ReportExport title="DJ Report" summary={djReportSummary} tables={djReportTables} />
             <Button variant="ghost" onClick={handleLogout} className="min-h-[44px] touch-manipulation">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
