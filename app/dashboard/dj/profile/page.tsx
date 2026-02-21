@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, User, Pencil, X } from 'lucide-react'
+import { ArrowLeft, User as UserIcon, Pencil, X } from 'lucide-react'
 import { DashboardBackground } from '@/components/theme/DashboardBackground'
 import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
@@ -100,7 +100,7 @@ export default function DjProfilePage() {
               {/* Name card */}
               <GlassCard glow="purple" className="p-6">
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
-                  <User className="w-5 h-5 text-purple-400" />
+                  <UserIcon className="w-5 h-5 text-purple-400" />
                   Display name
                 </h2>
                 <p className="text-sm text-gray-400 mb-3">
