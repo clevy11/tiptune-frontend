@@ -20,7 +20,7 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
-    role: Role.USER,
+    role: Role.DJ,
   })
   const [error, setError] = useState<string>('')
 
