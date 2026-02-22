@@ -321,55 +321,125 @@ export default function AdminDashboardPage() {
     </div>
   )
 
-  const OverviewRevenueOverTimeContent = ({ large }: { large?: boolean }) => (
-    <div className="flex items-end gap-1" style={{ height: large ? 320 : 160 }}>
-      {analytics?.revenueByDay?.map((d) => {
-        const max = Math.max(...analytics.revenueByDay!.map((x) => Number(x.revenue || 0)), 1)
-        const h = (Number(d.revenue) / max) * 100
-        return (
-          <div
-            key={d.date}
-            className="flex-1 min-w-0 flex flex-col items-center gap-1"
-            title={`${d.date}: ${Number(d.revenue).toLocaleString()} RWF`}
-          >
-            <div
-              className="w-full bg-green-500/50 rounded-t min-h-[4px] transition-all"
-              style={{ height: `${Math.max(h, 2)}%` }}
-            />
-            <span className={`text-xs ${large ? 'sm:text-sm' : ''} text-gray-500 truncate w-full text-center`}>
-              {d.date.slice(5)}
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
+  const overviewRevenuePoints = analytics?.revenueByDay ?? []
+  const overviewRevenueMax = Math.max(...overviewRevenuePoints.map((x) => Number(x.revenue || 0)), 1)
+  const overviewChartHeight = 280
+  const overviewChartWidth = Math.max(460, overviewRevenuePoints.length * 24)
+  const overviewPadding = { top: 24, right: 24, bottom: 44, left: 52 }
+
+  const OverviewRevenueOverTimeContent = ({ large }: { large?: boolean }) => {
+    const pts = overviewRevenuePoints
+    if (!pts.length) return <div className="text-gray-400 py-10 text-center">No chart data</div>
+    const innerW = overviewChartWidth - overviewPadding.left - overviewPadding.right
+    const innerH = (large ? 320 : overviewChartHeight) - overviewPadding.top - overviewPadding.bottom
+    const step = pts.length > 1 ? innerW / (pts.length - 1) : 0
+    const linePts = pts.map((d, i) => {
+      const v = Number(d.revenue) || 0
+      const x = overviewPadding.left + (pts.length > 1 ? i * step : innerW / 2)
+      const y = overviewPadding.top + innerH - (v / overviewRevenueMax) * innerH
+      return { x, y, date: d.date, value: v }
+    })
+    const lineD = linePts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ')
+    const areaD = `${lineD} L ${linePts[linePts.length - 1].x} ${overviewPadding.top + innerH} L ${linePts[0].x} ${overviewPadding.top + innerH} Z`
+    return (
+      <div className="overflow-x-auto">
+        <svg
+          width={overviewChartWidth}
+          height={(large ? 320 : overviewChartHeight) + 28}
+          className="overflow-visible"
+          aria-label="Tip revenue over time line chart"
+        >
+          <defs>
+            <linearGradient id="admin-ov-revenue-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="rgb(34, 197, 94)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {/* Y-axis exact values */}
+          {[0, 0.5, 1].map((t) => {
+            const y = overviewPadding.top + innerH - t * innerH
+            const val = Math.round(t * overviewRevenueMax)
+            return (
+              <g key={t}>
+                <line x1={overviewPadding.left} y1={y} x2={overviewPadding.left - 6} y2={y} stroke="currentColor" strokeOpacity={0.3} />
+                <text x={overviewPadding.left - 8} y={y + 4} textAnchor="end" className="text-[10px] fill-gray-500" fill="currentColor">
+                  {val.toLocaleString()}
+                </text>
+              </g>
+            )
+          })}
+          <path d={areaD} fill="url(#admin-ov-revenue-gradient)" />
+          <path d={lineD} fill="none" stroke="rgb(34, 197, 94)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+          {linePts.map((pt) => (
+            <g key={pt.date}>
+              <circle cx={pt.x} cy={pt.y} r={4} fill="rgb(34, 197, 94)" />
+              <text x={pt.x} y={overviewPadding.top + innerH + 18} textAnchor="middle" className="text-[10px] fill-gray-500" fill="currentColor">
+                {pt.date.slice(5)}
+              </text>
+              <text x={pt.x} y={pt.y - 8} textAnchor="middle" className="text-[10px] fill-gray-300 font-medium" fill="currentColor">
+                {pt.value.toLocaleString()}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    )
+  }
 
   const RevenueHistogramContent = ({ large }: { large?: boolean }) => {
     const points = revenueSeries?.points ?? []
     const max = Math.max(...points.map((p) => Number(p.revenue) || 0), 1)
     if (revenueSeriesLoading) return <div className="text-gray-400 py-10 text-center">Loading chart…</div>
     if (!points.length) return <div className="text-gray-400 py-10 text-center">No chart data</div>
+    const rHeight = large ? 320 : 180
+    const rWidth = Math.max(640, points.length * 24)
+    const rPadding = { top: 24, right: 24, bottom: 44, left: 52 }
+    const rInnerW = rWidth - rPadding.left - rPadding.right
+    const rInnerH = rHeight - rPadding.top - rPadding.bottom
+    const rStep = points.length > 1 ? rInnerW / (points.length - 1) : 0
+    const linePts = points.map((p, i) => {
+      const v = Number(p.revenue) || 0
+      const x = rPadding.left + (points.length > 1 ? i * rStep : rInnerW / 2)
+      const y = rPadding.top + rInnerH - (v / max) * rInnerH
+      return { x, y, bucket: p.bucket, value: v }
+    })
+    const lineD = linePts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ')
+    const areaD = `${lineD} L ${linePts[linePts.length - 1].x} ${rPadding.top + rInnerH} L ${linePts[0].x} ${rPadding.top + rInnerH} Z`
     return (
       <div className="overflow-x-auto">
-        <div className="flex items-end gap-2 py-2 pr-2" style={{ minHeight: large ? 360 : 180, minWidth: Math.max(640, points.length * 18) }}>
-          {points.map((p) => {
-            const v = Number(p.revenue) || 0
-            const h = Math.max(6, Math.round((v / max) * (large ? 320 : 160)))
+        <svg width={rWidth} height={rHeight + 28} className="overflow-visible" aria-label="Revenue over time line chart">
+          <defs>
+            <linearGradient id="admin-rev-hist-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgb(168, 85, 247)" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {[0, 0.5, 1].map((t) => {
+            const y = rPadding.top + rInnerH - t * rInnerH
+            const val = Math.round(t * max)
             return (
-              <div key={p.bucket} className="flex flex-col items-center gap-2">
-                <div
-                  title={`${p.bucket}: ${v.toLocaleString()} RWF`}
-                  className="w-3 rounded-t-md bg-purple-500/70"
-                  style={{ height: `${h}px` }}
-                />
-                <div className={`text-[10px] ${large ? 'sm:text-xs' : ''} text-gray-500 whitespace-nowrap rotate-[-45deg] origin-top-left`}>
-                  {effectiveInterval === 'hour' ? p.bucket.slice(11, 16) : p.bucket.slice(5)}
-                </div>
-              </div>
+              <g key={t}>
+                <line x1={rPadding.left} y1={y} x2={rPadding.left - 6} y2={y} stroke="currentColor" strokeOpacity={0.3} />
+                <text x={rPadding.left - 8} y={y + 4} textAnchor="end" className="text-[10px] fill-gray-500" fill="currentColor">
+                  {val.toLocaleString()}
+                </text>
+              </g>
             )
           })}
-        </div>
+          <path d={areaD} fill="url(#admin-rev-hist-gradient)" />
+          <path d={lineD} fill="none" stroke="rgb(168, 85, 247)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+          {linePts.map((pt) => (
+            <g key={pt.bucket}>
+              <circle cx={pt.x} cy={pt.y} r={4} fill="rgb(168, 85, 247)" />
+              <text x={pt.x} y={rPadding.top + rInnerH + 18} textAnchor="middle" className={`text-[10px] ${large ? 'sm:text-xs' : ''} fill-gray-500`} fill="currentColor">
+                {effectiveInterval === 'hour' ? pt.bucket.slice(11, 16) : pt.bucket.slice(5)}
+              </text>
+              <text x={pt.x} y={pt.y - 8} textAnchor="middle" className="text-[10px] fill-gray-300 font-medium" fill="currentColor">
+                {pt.value.toLocaleString()}
+              </text>
+            </g>
+          ))}
+        </svg>
       </div>
     )
   }
@@ -835,7 +905,7 @@ export default function AdminDashboardPage() {
               </GlassCard>
             )}
 
-            {/* Revenue over time (simple chart) */}
+            {/* Revenue over time (line chart with exact values) */}
             {analytics?.revenueByDay && analytics.revenueByDay.length > 0 && (
               <GlassCard glow="green">
                 <div className="flex items-center justify-between gap-3 mb-4">
@@ -845,25 +915,7 @@ export default function AdminDashboardPage() {
                     Full screen
                   </Button>
                 </div>
-                <div className="flex items-end gap-1 h-40">
-                  {analytics.revenueByDay.map((d) => {
-                    const max = Math.max(...analytics.revenueByDay!.map((x) => Number(x.revenue || 0)), 1)
-                    const h = (Number(d.revenue) / max) * 100
-                    return (
-                      <div
-                        key={d.date}
-                        className="flex-1 min-w-0 flex flex-col items-center gap-1"
-                        title={`${d.date}: ${Number(d.revenue).toLocaleString()} RWF`}
-                      >
-                        <div
-                          className="w-full bg-green-500/50 rounded-t min-h-[4px] transition-all"
-                          style={{ height: `${Math.max(h, 2)}%` }}
-                        />
-                        <span className="text-xs text-gray-500 truncate w-full text-center">{d.date.slice(5)}</span>
-                      </div>
-                    )
-                  })}
-                </div>
+                <OverviewRevenueOverTimeContent />
               </GlassCard>
             )}
           </div>
@@ -1284,12 +1336,12 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
-                  {/* Revenue histogram */}
+                  {/* Revenue over time (line chart) */}
                   <div className="lg:col-span-8 rounded-xl bg-white/5 border border-white/10 p-4">
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <div className="flex items-center gap-2">
                         <BarChart3 className="w-5 h-5 text-purple-400" />
-                        <h3 className="font-semibold text-gray-200">Revenue histogram</h3>
+                        <h3 className="font-semibold text-gray-200">Revenue over time</h3>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">{revenueSeries?.dateFrom} → {revenueSeries?.dateTo}</span>
@@ -1301,36 +1353,11 @@ export default function AdminDashboardPage() {
                     </div>
                     {revenueSeriesLoading ? (
                       <div className="text-gray-400 py-10 text-center">Loading chart…</div>
-                    ) : (revenueSeries?.points?.length ? (
-                      (() => {
-                        const points = revenueSeries.points
-                        const max = Math.max(...points.map((p) => Number(p.revenue) || 0), 1)
-                        return (
-                          <div className="overflow-x-auto">
-                            <div className="flex items-end gap-2 min-h-[180px] py-2 pr-2" style={{ minWidth: Math.max(640, points.length * 18) }}>
-                              {points.map((p) => {
-                                const v = Number(p.revenue) || 0
-                                const h = Math.max(6, Math.round((v / max) * 160))
-                                return (
-                                  <div key={p.bucket} className="flex flex-col items-center gap-2">
-                                    <div
-                                      title={`${p.bucket}: ${v.toLocaleString()} RWF`}
-                                      className="w-3 rounded-t-md bg-purple-500/70"
-                                      style={{ height: `${h}px` }}
-                                    />
-                                    <div className="text-[10px] text-gray-500 whitespace-nowrap rotate-[-45deg] origin-top-left">
-                                      {effectiveInterval === 'hour' ? p.bucket.slice(11, 16) : p.bucket.slice(5)}
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )
-                      })()
+                    ) : revenueSeries?.points?.length ? (
+                      <RevenueHistogramContent />
                     ) : (
                       <div className="text-gray-400 py-10 text-center">No chart data</div>
-                    ))}
+                    )}
                   </div>
 
                   {/* Top songs */}
@@ -1476,7 +1503,7 @@ export default function AdminDashboardPage() {
 
       <FullScreenOverlay
         open={fullScreen === 'rev_histogram'}
-        title="Revenue histogram"
+        title="Revenue over time"
         onClose={() => setFullScreen(null)}
         headerExtra={
           <span className="text-xs text-gray-400">

@@ -138,7 +138,13 @@ export default function DjAnalyticsPage() {
     )
   )
 
-  const HistogramContent = ({ large }: { large?: boolean }) => (
+  const HistogramContent = ({ large }: { large?: boolean }) => {
+    const chartHeight = large ? 280 : 160
+    const chartWidth = Math.max(460, chartPoints.length * 20)
+    const padding = { top: 24, right: 24, bottom: 44, left: 48 }
+    const innerWidth = chartWidth - padding.left - padding.right
+    const innerHeight = chartHeight - padding.top - padding.bottom
+    return (
     <>
       {interval === 'hour' && (!from || !to) && (
         <p className="text-sm text-gray-400">
@@ -158,32 +164,61 @@ export default function DjAnalyticsPage() {
             </p>
           )}
           <div className="overflow-x-auto">
-            <div
-              className="flex items-end gap-2 py-2 pr-2"
-              style={{
-                minHeight: large ? 320 : 180,
-                minWidth: Math.max(520, chartPoints.length * 18),
-              }}
+            <svg
+              width={chartWidth}
+              height={chartHeight + 28}
+              className="overflow-visible"
+              aria-label="Revenue over time line chart"
             >
-              {chartPoints.map((p) => {
-                const h = maxValue > 0
-                  ? Math.max(6, Math.round((p.value / maxValue) * (large ? 280 : 160)))
-                  : 6
-                const isPeak = peak?.label === p.label && peak?.value === p.value
+              <defs>
+                <linearGradient id="dj-analytics-line-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgb(168, 85, 247)" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              {/* Y-axis labels (exact values) */}
+              {maxValue > 0 && [0, 0.5, 1].map((t) => {
+                const y = padding.top + innerHeight - t * innerHeight
+                const val = Math.round(t * maxValue)
                 return (
-                  <div key={p.label} className="flex flex-col items-center gap-2">
-                    <div
-                      title={`${p.label}: ${p.value.toLocaleString()} RWF`}
-                      className={`w-3 rounded-t-md transition-colors ${isPeak ? 'bg-green-500' : 'bg-purple-500/70'}`}
-                      style={{ height: `${h}px` }}
-                    />
-                    <div className={`text-[10px] ${large ? 'sm:text-xs' : ''} text-gray-500 whitespace-nowrap rotate-[-45deg] origin-top-left`}>
-                      {interval === 'hour' ? p.label.slice(11, 16) : p.label.slice(5)}
-                    </div>
-                  </div>
+                  <g key={t}>
+                    <line x1={padding.left} y1={y} x2={padding.left - 6} y2={y} stroke="currentColor" strokeOpacity={0.3} />
+                    <text x={padding.left - 8} y={y + 4} textAnchor="end" className="text-[10px] fill-gray-500" fill="currentColor">
+                      {val.toLocaleString()}
+                    </text>
+                  </g>
                 )
               })}
-            </div>
+              {/* Line + area */}
+              {chartPoints.length > 0 && (() => {
+                const n = chartPoints.length
+                const step = n > 1 ? innerWidth / (n - 1) : 0
+                const pts = chartPoints.map((p, i) => {
+                  const x = padding.left + (n > 1 ? i * step : innerWidth / 2)
+                  const y = padding.top + (maxValue > 0 ? innerHeight - (p.value / maxValue) * innerHeight : innerHeight)
+                  return { x, y, ...p }
+                })
+                const lineD = pts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ')
+                const areaD = `${lineD} L ${pts[pts.length - 1].x} ${padding.top + innerHeight} L ${pts[0].x} ${padding.top + innerHeight} Z`
+                return (
+                  <g>
+                    <path d={areaD} fill="url(#dj-analytics-line-gradient)" />
+                    <path d={lineD} fill="none" stroke="rgb(168, 85, 247)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                    {pts.map((pt) => (
+                      <g key={pt.label}>
+                        <circle cx={pt.x} cy={pt.y} r={peak?.label === pt.label && peak?.value === pt.value ? 5 : 4} fill={peak?.label === pt.label && peak?.value === pt.value ? 'rgb(34, 197, 94)' : 'rgb(168, 85, 247)'} />
+                        <text x={pt.x} y={padding.top + innerHeight + 18} textAnchor="middle" className="text-[10px] fill-gray-500" fill="currentColor">
+                          {interval === 'hour' ? pt.label.slice(11, 16) : pt.label.slice(5)}
+                        </text>
+                        <text x={pt.x} y={pt.y - 8} textAnchor="middle" className="text-[10px] fill-gray-300 font-medium" fill="currentColor">
+                          {pt.value.toLocaleString()}
+                        </text>
+                      </g>
+                    ))}
+                  </g>
+                )
+              })()}
+            </svg>
           </div>
           <p className="text-xs text-gray-500">
             Tip: switch to <span className="text-gray-300">By hour</span> to identify the best performing hour.
@@ -191,7 +226,8 @@ export default function DjAnalyticsPage() {
         </div>
       )}
     </>
-  )
+  );
+  }
 
   if (!mounted) {
     return (
@@ -285,7 +321,7 @@ export default function DjAnalyticsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <h2 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-purple-400" />
-                Revenue histogram
+                Revenue over time
               </h2>
               <div className="flex flex-wrap items-center gap-2 justify-end">
                 <div className="flex rounded-lg overflow-hidden border border-white/20 w-fit">
@@ -373,7 +409,7 @@ export default function DjAnalyticsPage() {
 
       <FullScreenOverlay
         open={fullScreen === 'histogram'}
-        title="Revenue histogram"
+        title="Revenue over time"
         onClose={() => setFullScreen(null)}
         headerExtra={
           <div className="flex rounded-lg overflow-hidden border border-white/20 w-fit">
