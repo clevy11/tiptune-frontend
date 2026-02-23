@@ -30,6 +30,37 @@ import type {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
+/** Decode JWT payload (no verification; used only to read exp). Returns null if invalid. */
+function decodeJwtPayload(token: string): { exp?: number } | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const raw = atob(base64)
+    const json = decodeURIComponent(
+      raw.replace(/(.)/g, (ch) => '%' + ('00' + ch.charCodeAt(0).toString(16)).slice(-2))
+    )
+    return JSON.parse(json) as { exp?: number }
+  } catch {
+    return null
+  }
+}
+
+/** True if the JWT is expired (exp in seconds since epoch). Uses 10s skew to avoid edge flicker. */
+function isTokenExpired(token: string): boolean {
+  const payload = decodeJwtPayload(token)
+  if (!payload || payload.exp == null) return true
+  const nowSec = Math.floor(Date.now() / 1000)
+  return payload.exp < nowSec - 10
+}
+
+function clearAuthAndRedirectToLogin(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  window.location.href = '/login'
+}
+
 /** True if hostname looks like a local/dev IP (same-network mobile testing). */
 function isLocalNetworkHostname(hostname: string): boolean {
   if (hostname === 'localhost' || hostname === '127.0.0.1') return true
@@ -69,12 +100,16 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Request interceptor to add auth token
+// Request interceptor: add auth token only if valid and not expired; otherwise clear and redirect
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token')
       if (token) {
+        if (isTokenExpired(token)) {
+          clearAuthAndRedirectToLogin()
+          return Promise.reject(new Error('Token expired'))
+        }
         config.headers.Authorization = `Bearer ${token}`
       }
     }
@@ -93,11 +128,7 @@ api.interceptors.response.use(
     const isAuthEndpoint = error.config?.url?.includes('/auth/')
     
     if (error.response?.status === 401 && !isAuthEndpoint) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-      }
+      if (typeof window !== 'undefined') clearAuthAndRedirectToLogin()
     }
     
     // Extract error message from backend response
@@ -160,6 +191,11 @@ export const authApi = {
 
   getCurrentUser: (): User | null => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token')
+      if (token && isTokenExpired(token)) {
+        clearAuthAndRedirectToLogin()
+        return null
+      }
       const userStr = localStorage.getItem('user')
       if (userStr) {
         try {
