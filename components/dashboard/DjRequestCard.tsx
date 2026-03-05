@@ -1,7 +1,6 @@
 'use client'
 
 import { memo } from 'react'
-import { motion } from 'framer-motion'
 import { GlowButton } from '@/components/GlowButton'
 import { CheckCircle2, XCircle, PlayCircle, User } from 'lucide-react'
 import type { DjSongRequest } from '@/lib/types'
@@ -14,12 +13,7 @@ interface DjRequestCardProps {
 
 function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-lg p-4"
-    >
+    <div className="glass rounded-lg p-4 transition-colors hover:bg-white/5">
       <div className="flex justify-between items-start mb-2">
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{request.songTitle}</p>
@@ -50,7 +44,7 @@ function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
       </div>
       {request.status === RequestStatus.PENDING && (
         <div className="flex gap-2 mt-3">
-          <GlowButton
+          <GlowButton noMotion
             onClick={() => onStatusUpdate(request.id, RequestStatus.ACCEPTED)}
             glowColor="green"
             size="sm"
@@ -60,7 +54,7 @@ function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
             <CheckCircle2 className="w-4 h-4 mr-1" />
             Accept
           </GlowButton>
-          <GlowButton
+          <GlowButton noMotion
             onClick={() => onStatusUpdate(request.id, RequestStatus.DECLINED)}
             glowColor="red"
             size="sm"
@@ -73,7 +67,7 @@ function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
         </div>
       )}
       {request.status === RequestStatus.ACCEPTED && (
-        <GlowButton
+        <GlowButton noMotion
           onClick={() => onStatusUpdate(request.id, RequestStatus.PLAYED)}
           glowColor="blue"
           size="sm"
@@ -84,7 +78,7 @@ function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
           Mark as Played
         </GlowButton>
       )}
-    </motion.div>
+    </div>
   )
 }
 

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
 import { adminApi, authApi } from '@/lib/api'
 import { DashboardBackground } from '@/components/theme/DashboardBackground'
 import { GlassCard } from '@/components/GlassCard'
@@ -597,43 +596,30 @@ export default function AdminDashboardPage() {
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Header — responsive */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8"
-        >
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-4xl font-bold text-gradient mb-1 sm:mb-2">Admin Dashboard</h1>
             <p className="text-sm sm:text-base text-gray-400">Manage users, events, and requests</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ReportExport title="Admin Report" summary={adminReportSummary} tables={adminReportTables} />
-            <GlowButton onClick={handleLogout} glowColor="red" className="min-h-[44px] touch-manipulation">
+            <GlowButton noMotion onClick={handleLogout} glowColor="red" className="min-h-[44px] touch-manipulation">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </GlowButton>
           </div>
-        </motion.div>
+        </div>
 
         {currentUser && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-6"
-          >
+          <div className="mb-6">
             <DashboardProfile user={currentUser} onUserUpdate={setProfileUser} />
-          </motion.div>
+          </div>
         )}
 
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
+          <div className="mb-6">
             <ErrorMessage message={error} />
-          </motion.div>
+          </div>
         )}
 
         {/* Tabs — wrap on mobile, touch-friendly */}
@@ -699,7 +685,7 @@ export default function AdminDashboardPage() {
             </div>
             {/* Analytics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <GlassCard glow="purple">
+              <GlassCard noEnterAnimation glow="purple">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <Users className="w-8 h-8 text-purple-400" />
@@ -711,7 +697,7 @@ export default function AdminDashboardPage() {
                 </div>
               </GlassCard>
 
-              <GlassCard glow="blue">
+              <GlassCard noEnterAnimation glow="blue">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <Calendar className="w-8 h-8 text-blue-400" />
@@ -723,7 +709,7 @@ export default function AdminDashboardPage() {
                 </div>
               </GlassCard>
 
-              <GlassCard glow="pink">
+              <GlassCard noEnterAnimation glow="pink">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <Music className="w-8 h-8 text-pink-400" />
@@ -735,7 +721,7 @@ export default function AdminDashboardPage() {
                 </div>
               </GlassCard>
 
-              <GlassCard glow="green">
+              <GlassCard noEnterAnimation glow="green">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <DollarSign className="w-8 h-8 text-green-400" />
@@ -749,7 +735,7 @@ export default function AdminDashboardPage() {
                 </div>
               </GlassCard>
 
-              <GlassCard glow="green">
+              <GlassCard noEnterAnimation glow="green">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <BarChart3 className="w-8 h-8 text-green-400" />
@@ -763,7 +749,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Users per Role */}
-            <GlassCard glow="purple">
+            <GlassCard noEnterAnimation glow="purple">
               <h3 className="text-xl font-bold mb-4 text-gradient">Users by Role</h3>
               <div className="space-y-3">
                 {analytics?.usersPerRole && Object.entries(analytics.usersPerRole).map(([role, count]) => (
@@ -771,11 +757,9 @@ export default function AdminDashboardPage() {
                     <span className="text-gray-300">{role}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(count / (Object.values(analytics.usersPerRole).reduce((a, b) => a + b, 0) || 1)) * 100}%` }}
-                          transition={{ duration: 0.5 }}
-                          className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-[width] duration-300"
+                          style={{ width: `${(count / (Object.values(analytics.usersPerRole).reduce((a, b) => a + b, 0) || 1)) * 100}%` }}
                         />
                       </div>
                       <span className="text-purple-300 font-semibold w-12 text-right">{count}</span>
@@ -786,7 +770,7 @@ export default function AdminDashboardPage() {
             </GlassCard>
 
             {/* Request Stats */}
-            <GlassCard glow="pink">
+            <GlassCard noEnterAnimation glow="pink">
               <h3 className="text-xl font-bold mb-4 text-gradient">Request Status Breakdown</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
@@ -810,7 +794,7 @@ export default function AdminDashboardPage() {
 
             {/* Top DJs by Requests */}
             {analytics?.topDjs && analytics.topDjs.length > 0 && (
-              <GlassCard glow="blue">
+              <GlassCard noEnterAnimation glow="blue">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h3 className="text-xl font-bold text-gradient">Top DJs by Requests</h3>
                   <Button variant="outline" size="sm" className="min-h-[44px] gap-2" onClick={() => setFullScreen('ov_top_djs')}>
@@ -839,7 +823,7 @@ export default function AdminDashboardPage() {
 
             {/* Top DJs by Tip Revenue */}
             {analytics?.topDjsByTipRevenue && analytics.topDjsByTipRevenue.length > 0 && (
-              <GlassCard glow="green">
+              <GlassCard noEnterAnimation glow="green">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h3 className="text-xl font-bold text-gradient">Revenue per DJ (Top Earning DJs)</h3>
                   <Button variant="outline" size="sm" className="min-h-[44px] gap-2" onClick={() => setFullScreen('ov_top_revenue_djs')}>
@@ -870,7 +854,7 @@ export default function AdminDashboardPage() {
 
             {/* Event revenue ranking (highest tipping events) */}
             {analytics?.eventRevenueRanking && analytics.eventRevenueRanking.length > 0 && (
-              <GlassCard glow="blue">
+              <GlassCard noEnterAnimation glow="blue">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h3 className="text-xl font-bold text-gradient">Event Performance Ranking (by Tip Revenue)</h3>
                   <Button variant="outline" size="sm" className="min-h-[44px] gap-2" onClick={() => setFullScreen('ov_event_ranking')}>
@@ -907,7 +891,7 @@ export default function AdminDashboardPage() {
 
             {/* Revenue over time (line chart with exact values) */}
             {analytics?.revenueByDay && analytics.revenueByDay.length > 0 && (
-              <GlassCard glow="green">
+              <GlassCard noEnterAnimation glow="green">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h3 className="text-xl font-bold text-gradient">Tip Revenue Over Time</h3>
                   <Button variant="outline" size="sm" className="min-h-[44px] gap-2" onClick={() => setFullScreen('ov_revenue_over_time')}>
@@ -923,7 +907,7 @@ export default function AdminDashboardPage() {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <GlassCard glow="purple" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="purple" noEnterAnimation>
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gradient">Users</h2>
@@ -1000,7 +984,7 @@ export default function AdminDashboardPage() {
 
         {/* Events Tab */}
         {activeTab === 'events' && (
-          <GlassCard glow="blue" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="blue" noEnterAnimation>
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gradient">Events</h2>
@@ -1076,7 +1060,7 @@ export default function AdminDashboardPage() {
 
         {/* Requests Tab */}
         {activeTab === 'requests' && (
-          <GlassCard glow="pink" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="pink" noEnterAnimation>
             <div className="p-6">
               <div className="flex flex-col gap-4 mb-6">
                 <h2 className="text-2xl font-bold text-gradient">Requests</h2>
@@ -1203,7 +1187,7 @@ export default function AdminDashboardPage() {
         {/* Revenue Tab */}
         {activeTab === 'revenue' && (
           <div className="space-y-6">
-            <GlassCard glow="green" noEnterAnimation>
+            <GlassCard noEnterAnimation glow="green" noEnterAnimation>
               <div className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
@@ -1211,6 +1195,7 @@ export default function AdminDashboardPage() {
                     <p className="text-sm text-gray-400">Trends, peak hours, DJ breakdown, and top requested songs.</p>
       </div>
                   <GlowButton
+                    noMotion
                     size="sm"
                     glowColor="green"
                     onClick={() => {
@@ -1544,7 +1529,7 @@ export default function AdminDashboardPage() {
       {activeTab === 'broadcast' && (
         <div className="space-y-6">
           {/* Send Broadcast Form */}
-          <GlassCard glow="purple" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="purple" noEnterAnimation>
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gradient mb-2">Send Email Broadcast</h2>
               <p className="text-sm text-gray-400 mb-6">Send emails to selected users or all users</p>
@@ -1689,6 +1674,7 @@ export default function AdminDashboardPage() {
 
                     {/* Submit */}
                     <GlowButton
+                      noMotion
                       type="submit"
                       glowColor="purple"
                       className="w-full"
@@ -1708,7 +1694,7 @@ export default function AdminDashboardPage() {
           </GlassCard>
 
           {/* Broadcast Logs */}
-          <GlassCard glow="blue" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="blue" noEnterAnimation>
                 <div className="p-6">
                   <h2 className="text-2xl font-bold text-gradient mb-2">Broadcast History</h2>
                   <p className="text-sm text-gray-400 mb-6">View past email broadcasts</p>

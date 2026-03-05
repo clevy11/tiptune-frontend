@@ -9,7 +9,7 @@ interface GlassCardProps {
   className?: string
   hover?: boolean
   glow?: 'purple' | 'blue' | 'pink' | 'red' | 'green' | 'yellow' | 'none'
-  /** Skip entrance animation for list/table containers to improve scroll performance */
+  /** Skip entrance animation; use plain div with subtle hover overlay (for dashboards). */
   noEnterAnimation?: boolean
 }
 
@@ -19,9 +19,7 @@ export function GlassCard({ children, className, hover = true, glow = 'purple', 
 
   if (noEnterAnimation) {
     return (
-      <div
-        className={baseClass}
-      >
+      <div className={cn(baseClass, 'transition-colors', hover && 'hover:bg-white/5')}>
         {children}
       </div>
     )

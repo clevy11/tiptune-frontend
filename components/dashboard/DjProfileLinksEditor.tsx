@@ -72,7 +72,7 @@ export function DjProfileLinksEditor() {
   }
 
   return (
-    <GlassCard glow="blue" className="p-4">
+    <GlassCard noEnterAnimation glow="blue" className="p-4">
       <h3 className="font-semibold text-white flex items-center gap-2 mb-3">
         <Link2 className="w-4 h-4 text-blue-400" />
         Profile links
@@ -160,7 +160,7 @@ export function DjProfileLinksEditor() {
               onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
               className="flex-1 min-w-[120px] bg-white/10 text-sm"
             />
-            <GlowButton size="sm" glowColor="blue" onClick={handleAdd} disabled={updateMutation.isPending || !newLink.url?.trim()}>
+            <GlowButton noMotion size="sm" glowColor="blue" onClick={handleAdd} disabled={updateMutation.isPending || !newLink.url?.trim()}>
               <Plus className="w-4 h-4 mr-1" />
               Add
             </GlowButton>

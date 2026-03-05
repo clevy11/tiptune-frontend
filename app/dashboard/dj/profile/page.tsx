@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
 import { ArrowLeft, User as UserIcon, Pencil, X } from 'lucide-react'
 import { DashboardBackground } from '@/components/theme/DashboardBackground'
 import { GlassCard } from '@/components/GlassCard'
@@ -75,11 +74,7 @@ export default function DjProfilePage() {
     <div className="min-h-screen relative">
       <DashboardBackground />
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-2xl">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-6"
-        >
+        <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard/dj"
@@ -92,13 +87,13 @@ export default function DjProfilePage() {
           </div>
 
           {isLoading ? (
-            <GlassCard glow="purple" className="p-8 text-center">
+            <GlassCard noEnterAnimation glow="purple" className="p-8 text-center">
               <p className="text-gray-400">Loading profile...</p>
             </GlassCard>
           ) : (
             <>
               {/* Name card */}
-              <GlassCard glow="purple" className="p-6">
+              <GlassCard noEnterAnimation glow="purple" className="p-6">
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
                   <UserIcon className="w-5 h-5 text-purple-400" />
                   Display name
@@ -167,7 +162,7 @@ export default function DjProfilePage() {
               <DjProfileLinksEditor />
             </>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   )

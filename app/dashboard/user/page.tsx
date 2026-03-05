@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { userApi, authApi, songRequestApi } from '@/lib/api'
 import { DashboardBackground } from '@/components/theme/DashboardBackground'
@@ -87,19 +86,10 @@ export default function UserDashboardPage() {
       <DashboardBackground />
       <div className="relative z-10 container mx-auto px-6 py-8">
         {/* Profile + Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Sparkles className="w-8 h-8 text-pink-400" />
-              </motion.div>
+              <Sparkles className="w-8 h-8 text-pink-400" />
               <h1 className="text-3xl font-bold text-gradient">Nightlife Events</h1>
             </div>
             <Button variant="ghost" onClick={handleLogout} className="self-start sm:self-center">
@@ -110,22 +100,20 @@ export default function UserDashboardPage() {
           {currentUser && (
             <DashboardProfile user={currentUser} onUserUpdate={setProfileUser} className="mb-0" />
           )}
-        </motion.div>
+        </div>
 
         {/* My Requests Section */}
         {myRequests && myRequests.length > 0 && (
-          <GlassCard glow="purple" className="mb-8">
+          <GlassCard noEnterAnimation glow="purple" className="mb-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gradient">
               <ListMusic className="w-6 h-6" />
               My Requests
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {myRequests.map((request) => (
-                <motion.div
+                <div
                   key={request.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass rounded-lg p-4 border border-white/10"
+                  className="glass rounded-lg p-4 border border-white/10 transition-colors hover:bg-white/5"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
@@ -142,7 +130,7 @@ export default function UserDashboardPage() {
                       {request.status}
                     </span>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </GlassCard>
@@ -151,39 +139,16 @@ export default function UserDashboardPage() {
         {/* Events Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            >
-              <Music className="w-12 h-12 text-purple-400" />
-            </motion.div>
+            <Music className="w-12 h-12 text-purple-400 animate-pulse" />
           </div>
         ) : events && events.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event, index) => (
-              <motion.div
-                key={event.accessToken}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                whileHover={{ scale: 1.05, rotateY: 5 }}
-                style={{ perspective: '1000px' }}
-              >
-                <GlassCard glow="pink" className="h-full flex flex-col">
+            {events.map((event) => (
+              <div key={event.accessToken}>
+                <GlassCard noEnterAnimation glow="pink" className="h-full flex flex-col">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-4">
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.1, 1],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: 'easeInOut',
-                        }}
-                      >
-                        <Music className="w-12 h-12 text-pink-400 mb-2" />
-                      </motion.div>
+                      <Music className="w-12 h-12 text-pink-400 mb-2" />
                       <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
                         LIVE
                       </span>
@@ -213,6 +178,7 @@ export default function UserDashboardPage() {
                   
                   <Link href={`/event/${event.accessToken}`}>
                     <GlowButton
+                      noMotion
                       glowColor="pink"
                       className="w-full text-lg py-6"
                     >
@@ -221,25 +187,12 @@ export default function UserDashboardPage() {
                     </GlowButton>
                   </Link>
                 </GlassCard>
-              </motion.div>
+              </div>
             ))}
           </div>
         ) : (
-          <GlassCard glow="purple" className="text-center py-20">
-            <motion.div
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="mb-4"
-            >
-              <Music className="w-20 h-20 mx-auto text-purple-400" />
-            </motion.div>
+          <GlassCard noEnterAnimation glow="purple" className="text-center py-20">
+            <Music className="w-20 h-20 mx-auto text-purple-400 mb-4" />
             <h2 className="text-2xl font-bold mb-2">No Events Available</h2>
             <p className="text-gray-400">
               Check back later for exciting nightlife events!

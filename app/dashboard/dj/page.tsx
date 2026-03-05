@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { motion, AnimatePresence } from 'framer-motion'
 import { djApi, songRequestApi, authApi } from '@/lib/api'
 import { websocketService } from '@/lib/websocket'
 import type { EventRevenuePayload } from '@/lib/websocket'
@@ -50,12 +49,9 @@ const EventCard = memo(({
   isDeleting: boolean
   isEnding: boolean
 }) => (
-  <motion.div
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    whileHover={{ scale: 1.02 }}
+  <div
     className={`
-      glass rounded-lg p-4 transition-all
+      glass rounded-lg p-4 transition-colors hover:bg-white/5
       ${isSelected ? 'border-2 border-purple-500 glow-purple' : ''}
       ${event.status === EventStatus.ENDED ? 'opacity-75' : ''}
     `}
@@ -118,7 +114,7 @@ const EventCard = memo(({
         </span>
       )}
     </div>
-  </motion.div>
+  </div>
 ))
 EventCard.displayName = 'EventCard'
 
@@ -744,7 +740,7 @@ export default function DjDashboardPage() {
                         onChange={(e) => setTipSettingsForm({ ...tipSettingsForm, paymentValue: e.target.value.replace(/\D/g, '').slice(0, tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15) })}
                         maxLength={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15} className="w-full font-mono text-sm" />
                       <div className="flex gap-2">
-                        <GlowButton type="button" glowColor="green" size="sm" className="flex-1" disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
+                        <GlowButton noMotion type="button" glowColor="green" size="sm" className="flex-1" disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
                           onClick={() => updateTipSettingsMutation.mutate({ tipPaymentType: tipSettingsForm.tipPaymentType, paymentValue: tipSettingsForm.paymentValue.trim() })}>
                           {updateTipSettingsMutation.isPending ? 'Saving...' : 'Update'}
                         </GlowButton>
@@ -795,7 +791,7 @@ export default function DjDashboardPage() {
                 maxLength={tipSettingsForm.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15}
                 className="w-full font-mono text-sm"
               />
-              <GlowButton
+              <GlowButton noMotion
                 type="button"
                 glowColor="green"
                 size="sm"
@@ -827,11 +823,7 @@ export default function DjDashboardPage() {
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-[100vw] overflow-x-hidden">
         {/* Header — mobile: hamburger + stacked; desktop: row */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8"
-        >
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -877,7 +869,7 @@ export default function DjDashboardPage() {
               <BarChart3 className="w-4 h-4 text-purple-400" />
               Analytics
             </Link>
-            <GlowButton
+            <GlowButton noMotion
               onClick={() => {
                 setCreateEventError(null)
                 setShowCreateEvent(true)
@@ -893,15 +885,11 @@ export default function DjDashboardPage() {
               Logout
             </Button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Create/Edit Event Modal */}
-        <AnimatePresence>
-          {(showCreateEvent || editingEventId !== null) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+        {(showCreateEvent || editingEventId !== null) && (
+            <div
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
               onClick={() => {
                 setShowCreateEvent(false)
@@ -909,14 +897,12 @@ export default function DjDashboardPage() {
                 setCreateEventError(null)
               }}
             >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+            <div
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-2xl"
             >
                 <GlassCard
+                  noEnterAnimation
                   glow={createEventError ? 'red' : 'purple'}
                   className={`p-8 ${createEventError ? 'ring-2 ring-red-500/50' : ''}`}
                 >
@@ -925,13 +911,9 @@ export default function DjDashboardPage() {
                   </h2>
                   <form onSubmit={editingEventId ? handleUpdateEvent : handleCreateEvent} className="space-y-4">
                     {createEventError && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="rounded-xl bg-red-500/10 border border-red-500/30 p-4"
-                      >
+                      <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4">
                         <ErrorMessage message={createEventError} />
-                      </motion.div>
+                      </div>
                     )}
                     <Input
                       placeholder="Event Name *"
@@ -1055,8 +1037,9 @@ export default function DjDashboardPage() {
                       </FieldErrorWrapper>
                     </div>
                     <div className="flex gap-4">
-                      <GlowButton
+                      <GlowButton noMotion
                         type="submit"
+                        noMotion
                         disabled={editingEventId ? updateEventMutation.isPending : createEventMutation.isPending}
                         glowColor="pink"
                         className="flex-1"
@@ -1081,15 +1064,14 @@ export default function DjDashboardPage() {
                     </div>
                   </form>
                 </GlassCard>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {/* Events List — hidden on mobile (use drawer); visible from tablet (md) */}
           <div className="hidden md:block md:col-span-1 min-w-0">
-            <GlassCard glow="purple">
+            <GlassCard noEnterAnimation glow="purple">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Music className="w-5 h-5 text-purple-400" />
                 My Events
@@ -1116,7 +1098,7 @@ export default function DjDashboardPage() {
             </GlassCard>
 
             {/* Permanent tip link */}
-            <GlassCard glow="green" className="mt-4">
+            <GlassCard noEnterAnimation glow="green" className="mt-4">
               <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-green-400" />
                 Permanent tip link
@@ -1215,7 +1197,7 @@ export default function DjDashboardPage() {
                     className="w-full font-mono text-sm"
                   />
                   <div className="flex gap-2">
-                    <GlowButton
+                    <GlowButton noMotion
                       type="button"
                       glowColor="green"
                       className="flex-1"
@@ -1243,20 +1225,20 @@ export default function DjDashboardPage() {
 
             {/* Total revenue & Tip records count */}
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <GlassCard glow="green" className="p-3">
+              <GlassCard noEnterAnimation glow="green" className="p-3">
                 <p className="text-xs text-gray-400 mb-1">Total revenue</p>
                 <p className="text-lg font-bold text-green-400">
                   {(revenueSummary ? Number(revenueSummary.totalRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
                 </p>
               </GlassCard>
-              <GlassCard glow="green" className="p-3">
+              <GlassCard noEnterAnimation glow="green" className="p-3">
                 <p className="text-xs text-gray-400 mb-1">Tip-only records</p>
                 <p className="text-lg font-bold text-green-400">{revenueSummary?.tipRecordCount ?? standaloneTips?.length ?? 0}</p>
               </GlassCard>
             </div>
 
             {/* Tip-only tips (standalone, not from events) */}
-            <GlassCard glow="green" className="mt-4">
+            <GlassCard noEnterAnimation glow="green" className="mt-4">
               <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-green-400" />
                 Tip-only tips
@@ -1291,18 +1273,18 @@ export default function DjDashboardPage() {
             {/* Mobile-only: compact revenue strip + collapsible Tip-only tips (hidden from tablet up when sidebar is visible) */}
             <div className="md:hidden mb-4">
               <div className="grid grid-cols-2 gap-2 mb-2">
-                <GlassCard glow="green" className="p-3">
+                <GlassCard noEnterAnimation glow="green" className="p-3">
                   <p className="text-xs text-gray-400">Revenue</p>
                   <p className="text-base font-bold text-green-400">
                     {(revenueSummary ? Number(revenueSummary.totalRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
                   </p>
                 </GlassCard>
-                <GlassCard glow="green" className="p-3">
+                <GlassCard noEnterAnimation glow="green" className="p-3">
                   <p className="text-xs text-gray-400">Tip-only</p>
                   <p className="text-base font-bold text-green-400">{revenueSummary?.tipRecordCount ?? standaloneTips?.length ?? 0}</p>
                 </GlassCard>
               </div>
-              <GlassCard glow="green" className="overflow-hidden">
+              <GlassCard noEnterAnimation glow="green" className="overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setMobileTipsOpen((o) => !o)}
@@ -1347,7 +1329,7 @@ export default function DjDashboardPage() {
             {selectedEvent ? (
               <div className="space-y-4">
                 {/* 1. Event details & QR (back in place) */}
-                <GlassCard glow="blue">
+                <GlassCard noEnterAnimation glow="blue">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -1394,12 +1376,12 @@ export default function DjDashboardPage() {
                 </GlassCard>
 
                 {/* 2. Song Requests — primary focus */}
-                <GlassCard glow="pink" className={!fullScreenRequests ? 'sticky top-4 z-10' : ''}>
+                <GlassCard noEnterAnimation glow="pink" className={!fullScreenRequests ? 'sticky top-4 z-10' : ''}>
                   <div className="flex flex-col gap-4 mb-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h3 className="text-xl font-bold">Song Requests</h3>
                       <div className="flex flex-wrap items-center gap-2">
-                        <GlowButton
+                        <GlowButton noMotion
                           type="button"
                           onClick={() => setFullScreenRequests(true)}
                           glowColor="purple"
@@ -1467,16 +1449,9 @@ export default function DjDashboardPage() {
                         return (
                           <>
                             {displayed.map((request) => (
-                              <motion.div
+                              <div
                                 key={request.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{
-                                  opacity: 1,
-                                  y: 0,
-                                  scale: highlightRequestId === request.id ? [1, 1.02, 1] : 1,
-                                }}
-                                transition={highlightRequestId === request.id ? { duration: 0.4 } : {}}
-                                className={`glass rounded-lg p-4 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20' : ''}`}
+                                className={`glass rounded-lg p-4 transition-colors hover:bg-white/5 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20' : ''}`}
                               >
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1 min-w-0">
@@ -1519,7 +1494,7 @@ export default function DjDashboardPage() {
                           </div>
                           {request.status === RequestStatus.PENDING && (
                             <div className="flex gap-2 mt-3">
-                              <GlowButton
+                              <GlowButton noMotion
                                 onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)}
                                 glowColor="green"
                                 size="sm"
@@ -1529,7 +1504,7 @@ export default function DjDashboardPage() {
                                 <CheckCircle2 className="w-4 h-4 mr-1" />
                                 Accept
                               </GlowButton>
-                              <GlowButton
+                              <GlowButton noMotion
                                 onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)}
                                 glowColor="red"
                                 size="sm"
@@ -1542,7 +1517,7 @@ export default function DjDashboardPage() {
                             </div>
                           )}
                           {request.status === RequestStatus.ACCEPTED && (
-                            <GlowButton
+                            <GlowButton noMotion
                               onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)}
                               glowColor="blue"
                               size="sm"
@@ -1553,7 +1528,7 @@ export default function DjDashboardPage() {
                               Mark as Played
                             </GlowButton>
                           )}
-                        </motion.div>
+                        </div>
                             ))}
                             {requests.length > requestsDisplayCount && (
                               <button
@@ -1618,7 +1593,7 @@ export default function DjDashboardPage() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="sm" onClick={() => { setRevenueDateFrom(''); setRevenueDateTo('') }}>Clear</Button>
-                        <GlowButton
+                        <GlowButton noMotion
                           size="sm"
                           glowColor="green"
                           onClick={async () => {
@@ -1669,14 +1644,8 @@ export default function DjDashboardPage() {
         </div>
 
         {/* Full-screen request mode overlay */}
-        <AnimatePresence>
-          {fullScreenRequests && selectedEvent && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-gray-900/98 backdrop-blur flex flex-col"
-            >
+        {fullScreenRequests && selectedEvent && (
+            <div className="fixed inset-0 z-[100] bg-gray-900/98 backdrop-blur flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <div className="flex items-center gap-4">
                   <span className="text-lg font-bold text-white">{selectedEvent.name} — Requests</span>
@@ -1686,8 +1655,9 @@ export default function DjDashboardPage() {
                       : '0 RWF'}
                   </span>
                 </div>
-                <GlowButton
+                <GlowButton noMotion
                   type="button"
+                  noMotion
                   onClick={() => setFullScreenRequests(false)}
                   glowColor="red"
                   size="sm"
@@ -1740,10 +1710,9 @@ export default function DjDashboardPage() {
                 {requests && requests.length > 0 ? (
                   <div className="space-y-3 max-w-2xl mx-auto">
                     {requests.slice(0, requestsDisplayCount).map((request) => (
-                      <motion.div
+                      <div
                         key={request.id}
-                        layout
-                        className={`glass rounded-lg p-4 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900' : ''}`}
+                        className={`glass rounded-lg p-4 transition-colors hover:bg-white/5 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900' : ''}`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1 min-w-0">
@@ -1777,20 +1746,20 @@ export default function DjDashboardPage() {
                         </div>
                         {request.status === RequestStatus.PENDING && (
                           <div className="flex gap-2 mt-3">
-                            <GlowButton onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)} glowColor="green" size="sm" variant="outline" className="flex-1">
+                            <GlowButton noMotion onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)} glowColor="green" size="sm" variant="outline" className="flex-1">
                               <CheckCircle2 className="w-4 h-4 mr-1" /> Accept
                             </GlowButton>
-                            <GlowButton onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)} glowColor="red" size="sm" variant="outline" className="flex-1">
+                            <GlowButton noMotion onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)} glowColor="red" size="sm" variant="outline" className="flex-1">
                               <XCircle className="w-4 h-4 mr-1" /> Decline
                             </GlowButton>
                           </div>
                         )}
                         {request.status === RequestStatus.ACCEPTED && (
-                          <GlowButton onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)} glowColor="blue" size="sm" variant="outline" className="w-full mt-3">
+                          <GlowButton noMotion onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)} glowColor="blue" size="sm" variant="outline" className="w-full mt-3">
                             <PlayCircle className="w-4 h-4 mr-1" /> Mark as Played
                           </GlowButton>
                         )}
-                      </motion.div>
+                      </div>
                     ))}
                     {requests.length > requestsDisplayCount && (
                       <button
@@ -1806,9 +1775,8 @@ export default function DjDashboardPage() {
                   <p className="text-gray-400 text-center py-12">No requests in this view</p>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
     </div>
   )

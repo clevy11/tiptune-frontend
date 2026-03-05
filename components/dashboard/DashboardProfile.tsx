@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { User as UserIcon, Pencil, X } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { GlassCard } from '@/components/GlassCard'
@@ -78,79 +77,65 @@ export function DashboardProfile({ user, onUserUpdate, className }: DashboardPro
   const initial = user.name.charAt(0).toUpperCase() || '?'
 
   return (
-    <GlassCard glow="purple" className={cn('p-4', className)}>
+    <GlassCard noEnterAnimation glow="purple" className={cn('p-4', className)}>
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
           {initial}
         </div>
         <div className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            {!isEditing ? (
-              <motion.div
-                key="view"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-wrap items-center gap-2"
+          {!isEditing ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-semibold text-white text-lg truncate">{user.name}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditName(user.name)
+                  setIsEditing(true)
+                }}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-purple-300 transition-colors touch-manipulation"
+                aria-label="Edit profile"
               >
-                <p className="font-semibold text-white text-lg truncate">{user.name}</p>
-                <button
-                  type="button"
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Your name"
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave()
+                  if (e.key === 'Escape') {
+                    setEditName(user.name)
+                    setIsEditing(false)
+                  }
+                }}
+              />
+              <div className="flex gap-2">
+                <GlowButton noMotion
+                  size="sm"
+                  glowColor="teal"
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending || !editName.trim()}
+                >
+                  {updateMutation.isPending ? 'Saving...' : 'Save'}
+                </GlowButton>
+                <Button
+                  size="sm"
+                  variant="ghost"
                   onClick={() => {
                     setEditName(user.name)
-                    setIsEditing(true)
+                    setIsEditing(false)
                   }}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-purple-300 transition-colors touch-manipulation"
-                  aria-label="Edit profile"
                 >
-                  <Pencil className="w-4 h-4" />
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="edit"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-2"
-              >
-                <Input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Your name"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-500"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSave()
-                    if (e.key === 'Escape') {
-                      setEditName(user.name)
-                      setIsEditing(false)
-                    }
-                  }}
-                />
-                <div className="flex gap-2">
-                  <GlowButton
-                    size="sm"
-                    glowColor="teal"
-                    onClick={handleSave}
-                    disabled={updateMutation.isPending || !editName.trim()}
-                  >
-                    {updateMutation.isPending ? 'Saving...' : 'Save'}
-                  </GlowButton>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setEditName(user.name)
-                      setIsEditing(false)
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
           <p className="text-sm text-gray-400 truncate mt-0.5">{user.email}</p>
           <p className="text-xs text-gray-500 capitalize mt-0.5">{user.role.replace('_', ' ')}</p>
         </div>
