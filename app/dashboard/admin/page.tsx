@@ -907,7 +907,7 @@ export default function AdminDashboardPage() {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <GlassCard noEnterAnimation glow="purple" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="purple">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gradient">Users</h2>
@@ -984,7 +984,7 @@ export default function AdminDashboardPage() {
 
         {/* Events Tab */}
         {activeTab === 'events' && (
-          <GlassCard noEnterAnimation glow="blue" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="blue">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gradient">Events</h2>
@@ -1060,7 +1060,7 @@ export default function AdminDashboardPage() {
 
         {/* Requests Tab */}
         {activeTab === 'requests' && (
-          <GlassCard noEnterAnimation glow="pink" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="pink">
             <div className="p-6">
               <div className="flex flex-col gap-4 mb-6">
                 <h2 className="text-2xl font-bold text-gradient">Requests</h2>
@@ -1187,7 +1187,7 @@ export default function AdminDashboardPage() {
         {/* Revenue Tab */}
         {activeTab === 'revenue' && (
           <div className="space-y-6">
-            <GlassCard noEnterAnimation glow="green" noEnterAnimation>
+            <GlassCard noEnterAnimation glow="green">
               <div className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
@@ -1529,7 +1529,7 @@ export default function AdminDashboardPage() {
       {activeTab === 'broadcast' && (
         <div className="space-y-6">
           {/* Send Broadcast Form */}
-          <GlassCard noEnterAnimation glow="purple" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="purple">
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gradient mb-2">Send Email Broadcast</h2>
               <p className="text-sm text-gray-400 mb-6">Send emails to selected users or all users</p>
@@ -1694,7 +1694,7 @@ export default function AdminDashboardPage() {
           </GlassCard>
 
           {/* Broadcast Logs */}
-          <GlassCard noEnterAnimation glow="blue" noEnterAnimation>
+          <GlassCard noEnterAnimation glow="blue">
                 <div className="p-6">
                   <h2 className="text-2xl font-bold text-gradient mb-2">Broadcast History</h2>
                   <p className="text-sm text-gray-400 mb-6">View past email broadcasts</p>

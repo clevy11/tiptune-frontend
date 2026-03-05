@@ -1039,7 +1039,6 @@ export default function DjDashboardPage() {
                     <div className="flex gap-4">
                       <GlowButton noMotion
                         type="submit"
-                        noMotion
                         disabled={editingEventId ? updateEventMutation.isPending : createEventMutation.isPending}
                         glowColor="pink"
                         className="flex-1"
@@ -1657,7 +1656,6 @@ export default function DjDashboardPage() {
                 </div>
                 <GlowButton noMotion
                   type="button"
-                  noMotion
                   onClick={() => setFullScreenRequests(false)}
                   glowColor="red"
                   size="sm"
