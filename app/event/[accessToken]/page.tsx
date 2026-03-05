@@ -445,6 +445,25 @@ export default function PublicEventPage() {
                 )}
                 <div className="space-y-3">
                   <div>
+                    <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
+                    <Input
+                      placeholder="Payer name"
+                      value={formData.payerName}
+                      onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+                    <Input
+                      type="tel"
+                      placeholder="Phone number"
+                      value={formData.payerPhone}
+                      onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
                     <Input
                       type="number"
@@ -508,25 +527,6 @@ export default function PublicEventPage() {
                       </div>
                     )
                   })()}
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
-                    <Input
-                      placeholder="Payer name"
-                      value={formData.payerName}
-                      onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
-                    <Input
-                      type="tel"
-                      placeholder="Phone number"
-                      value={formData.payerPhone}
-                      onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
-                      className="w-full"
-                    />
-                  </div>
                 </div>
                 {tipError && <p className="text-sm text-red-400 mt-2" role="alert">{tipError}</p>}
               </motion.div>
@@ -774,6 +774,25 @@ export default function PublicEventPage() {
                           </div>
                         )}
                         <div>
+                          <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
+                          <Input
+                            placeholder="Payer name"
+                            value={formData.payerName}
+                            onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+                          <Input
+                            type="tel"
+                            placeholder="Phone number"
+                            value={formData.payerPhone}
+                            onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
                           <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
                           <Input
                             type="number"
@@ -810,25 +829,6 @@ export default function PublicEventPage() {
                             </div>
                           )
                         })()}
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
-                          <Input
-                            placeholder="Payer name"
-                            value={formData.payerName}
-                            onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
-                            className="w-full"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
-                          <Input
-                            type="tel"
-                            placeholder="Phone number"
-                            value={formData.payerPhone}
-                            onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
-                            className="w-full"
-                          />
-                        </div>
                       </div>
                     )}
                   </motion.div>

@@ -201,6 +201,7 @@ export interface TipInfoResponse {
   paymentType: TipPaymentType
   paymentValue: string
   tipLinkToken: string | null
+  profileLinks?: ProfileLinkResponse[]
 }
 
 export interface TipSettingsRequest {

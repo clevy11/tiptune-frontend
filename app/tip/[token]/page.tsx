@@ -7,10 +7,11 @@ import { motion } from 'framer-motion'
 import { AnimatedBackground } from '@/components/AnimatedBackground'
 import { GlassCard } from '@/components/GlassCard'
 import { Input } from '@/components/ui/input'
-import { DollarSign, Home, Smartphone } from 'lucide-react'
+import { DollarSign, Home, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
+import { SiInstagram, SiMixcloud } from 'react-icons/si'
 import { publicTipApi } from '@/lib/api'
-import type { TipInfoResponse } from '@/lib/types'
-import { TipPaymentType } from '@/lib/types'
+import type { TipInfoResponse, ProfileLinkResponse } from '@/lib/types'
+import { TipPaymentType, ProfileLinkType } from '@/lib/types'
 
 async function submitAndOpenTel(
   submit: () => Promise<void>,
@@ -120,6 +121,47 @@ export default function PermanentTipPage() {
             <p className="text-gray-400 text-sm">Send a tip via MoMo</p>
           </GlassCard>
 
+          {tipInfo.profileLinks && tipInfo.profileLinks.length > 0 && (
+            <GlassCard glow="purple" className="text-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2 text-white font-semibold">
+                  <User className="w-5 h-5 text-purple-400" aria-hidden />
+                  <span>{tipInfo.djName}</span>
+                </div>
+                <p className="text-xs text-gray-500 font-medium">Their socials</p>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+                  {tipInfo.profileLinks.map((link: ProfileLinkResponse) => {
+                    const label =
+                      link.linkType === ProfileLinkType.CUSTOM && link.label
+                        ? link.label
+                        : link.linkType.charAt(0) + link.linkType.slice(1).toLowerCase()
+                    const Icon =
+                      link.linkType === ProfileLinkType.INSTAGRAM
+                        ? SiInstagram
+                        : link.linkType === ProfileLinkType.MIXCLOUD
+                        ? SiMixcloud
+                        : link.linkType === ProfileLinkType.WEBSITE
+                        ? Globe
+                        : Link2
+                    return (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-purple-500/30 border border-white/20 hover:border-purple-500/50 px-4 py-2.5 text-sm font-medium text-gray-200 hover:text-white transition-colors"
+                      >
+                        <Icon className="w-4 h-4 shrink-0 text-purple-400" aria-hidden />
+                        <span>{label}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" aria-hidden />
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            </GlassCard>
+          )}
+
           <GlassCard glow="green">
             {paymentValue && (
               <div className="rounded-lg bg-white/10 border border-green-500/30 p-4 mb-4">
@@ -133,6 +175,25 @@ export default function PermanentTipPage() {
               </div>
             )}
             <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
+                <Input
+                  placeholder="Payer name"
+                  value={formData.payerName}
+                  onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+                <Input
+                  type="tel"
+                  placeholder="Phone number"
+                  value={formData.payerPhone}
+                  onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
+                  className="w-full"
+                />
+              </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Tip amount (RWF) *</label>
                 <Input
@@ -190,25 +251,6 @@ export default function PermanentTipPage() {
                   </div>
                 )
               })()}
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Your name (optional)</label>
-                <Input
-                  placeholder="Payer name"
-                  value={formData.payerName}
-                  onChange={(e) => setFormData({ ...formData, payerName: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
-                <Input
-                  type="tel"
-                  placeholder="Phone number"
-                  value={formData.payerPhone}
-                  onChange={(e) => setFormData({ ...formData, payerPhone: e.target.value })}
-                  className="w-full"
-                />
-              </div>
             </div>
             {tipError && <p className="text-sm text-red-400 mt-2" role="alert">{tipError}</p>}
           </GlassCard>
