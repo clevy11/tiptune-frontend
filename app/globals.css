@@ -326,6 +326,15 @@
     background-size: 40px 40px;
   }
 
+  /* Dashboard: same matrix-style grid as login form panel */
+  .dashboard-matrix-bg {
+    background-color: #080c16;
+    background-image:
+      linear-gradient(rgba(155,89,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(155,89,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
   .auth-scan {
     background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,0.2) 30%, rgba(155,89,247,0.4) 60%, transparent 100%);
     animation: auth-scan 7s linear infinite;

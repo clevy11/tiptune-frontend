@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { authApi } from '@/lib/api'
-import { Mail, Lock, User, ArrowRight } from 'lucide-react'
+import { Mail, User, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import type { RegisterRequest } from '@/lib/types'
 import { Role } from '@/lib/types'
 import { AuthSplitLayout } from '@/components/auth/AuthSplitLayout'
@@ -20,10 +20,13 @@ export default function RegisterPage() {
     role: Role.DJ,
   })
   const [error, setError] = useState<string>('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const registerMutation = useMutation({
     mutationFn: authApi.register,
     onSuccess: () => {
+      setIsRedirecting(true)
       router.push('/dashboard')
     },
     onError: (err: any) => {
@@ -135,14 +138,25 @@ export default function RegisterPage() {
               </label>
               <div className="relative">
                 <input
-                type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                value={formData.password}
+                  value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                  className="w-full h-12 rounded-xl bg-white/[0.03] border border-purple-500/20 px-4 pr-11 text-slate-200 placeholder:text-slate-600 outline-none transition focus:border-cyan-300/50 focus:bg-cyan-300/[0.03] focus:shadow-[0_0_0_1px_rgba(34,211,238,0.15),0_10px_30px_rgba(34,211,238,0.06)]"
+                  required
+                  className="w-full h-12 rounded-xl bg-white/[0.03] border border-purple-500/20 px-4 pr-12 text-slate-200 placeholder:text-slate-600 outline-none transition focus:border-cyan-300/50 focus:bg-cyan-300/[0.03] focus:shadow-[0_0_0_1px_rgba(34,211,238,0.15),0_10px_30px_rgba(34,211,238,0.06)]"
                 />
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/50"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" aria-hidden />
+                  ) : (
+                    <Eye className="w-4 h-4" aria-hidden />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -162,11 +176,11 @@ export default function RegisterPage() {
 
             <button
                 type="submit"
-                disabled={registerMutation.isPending}
+                disabled={registerMutation.isPending || isRedirecting}
               className="w-full h-12 rounded-xl text-white font-[Rajdhani,system-ui] font-semibold tracking-[0.22em] uppercase bg-gradient-to-br from-purple-600 via-purple-500 to-blue-500 shadow-[0_10px_30px_rgba(123,47,247,0.35),0_0_0_1px_rgba(155,89,247,0.25)] transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span className="inline-flex items-center justify-center gap-3">
-                {registerMutation.isPending ? 'Creating…' : 'Register'}
+                {registerMutation.isPending || isRedirecting ? 'Creating…' : 'Register'}
                 <span className="h-6 w-6 rounded-full bg-white/15 inline-flex items-center justify-center">
                   <ArrowRight className="w-4 h-4" aria-hidden />
                 </span>
