@@ -698,7 +698,7 @@ export default function DjDashboardPage() {
                     height={200}
                   />
                   <Button
-                    type="button"
+              type="button"
                     variant="outline"
                     size="sm"
                     className="w-full gap-2"
@@ -797,7 +797,7 @@ export default function DjDashboardPage() {
                 size="sm"
                 className="w-full"
                 disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
-                onClick={() => {
+              onClick={() => {
                   updateTipSettingsMutation.mutate({
                     tipPaymentType: tipSettingsForm.tipPaymentType,
                     paymentValue: tipSettingsForm.paymentValue.trim(),
@@ -837,7 +837,7 @@ export default function DjDashboardPage() {
               <p className="text-xs uppercase tracking-wider text-gray-500 font-medium pl-10 sm:pl-0">
                 DJ Control Panel
               </p>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
                 <Music className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400 shrink-0" aria-hidden />
                 {currentUser?.name ? (
                   <Link
@@ -1251,14 +1251,14 @@ export default function DjDashboardPage() {
                         <span className="font-medium text-green-300">{Number(t.amount).toLocaleString()} RWF</span>
                         <span className="text-xs text-gray-500">
                           {typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
-                        </span>
+                          </span>
                       </div>
                       {(t.payerName || t.payerPhone) && (
                         <p className="text-xs text-gray-400 mt-1">
                           {[t.payerName, t.payerPhone].filter(Boolean).join(' · ')}
                         </p>
-                      )}
-                    </div>
+                        )}
+                      </div>
                   ))}
                 </div>
               ) : (
@@ -1313,17 +1313,17 @@ export default function DjDashboardPage() {
                             <p className="text-xs text-gray-400 mt-1">{[t.payerName, t.payerPhone].filter(Boolean).join(' · ')}</p>
                           )}
                         </div>
-                      ))
-                    ) : (
+                  ))
+                ) : (
                       <p className="text-gray-400 text-center py-2 text-sm">No tip-only tips yet</p>
                     )}
                     {standaloneTips && standaloneTips.length > 10 && (
                       <p className="text-xs text-gray-500 text-center">+{standaloneTips.length - 10} more</p>
-                    )}
-                  </div>
                 )}
-              </GlassCard>
-            </div>
+              </div>
+                )}
+            </GlassCard>
+          </div>
 
             {selectedEvent ? (
               <div className="space-y-4">
@@ -1407,9 +1407,9 @@ export default function DjDashboardPage() {
                           >
                             Played
                           </button>
-                        </div>
                       </div>
-                    </div>
+                      </div>
+                      </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {requestTab === 'active' && (
                         <>
@@ -1439,7 +1439,7 @@ export default function DjDashboardPage() {
                         <option value="recent">Most recent</option>
                         <option value="oldest">Oldest</option>
                       </select>
-                    </div>
+                      </div>
                   </div>
                   <div className="space-y-3 max-h-[70vh] overflow-y-auto">
                     {requests && requests.length > 0 ? (
@@ -1449,13 +1449,13 @@ export default function DjDashboardPage() {
                           <>
                             {displayed.map((request) => (
                               <div
-                                key={request.id}
+                          key={request.id}
                                 className={`glass rounded-lg p-4 transition-colors hover:bg-white/5 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20' : ''}`}
-                              >
+                        >
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium">{request.songTitle}</p>
+                              <p className="font-medium">{request.songTitle}</p>
                                 {(Number(request.tipAmount) || 0) > 0 && (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium border border-green-500/50">
                                     <DollarSign className="w-3 h-3" />

@@ -30,8 +30,17 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="flex items-center gap-2"
           >
-            <Music className="w-7 h-7 sm:w-8 sm:h-8 text-[#00F5C3]" aria-hidden />
-            <span className="text-xl sm:text-2xl font-bold text-gradient">TipTune</span>
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/images/landing/logo.png"
+                alt="TipTune"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-xl shadow-[0_0_16px_rgba(123,47,247,0.5)]"
+                priority
+              />
+              <span className="text-xl sm:text-2xl font-bold text-gradient">TipTune</span>
+            </Link>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: 20 }}

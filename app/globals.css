@@ -313,4 +313,41 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Auth split-screen helpers (login/register) */
+  .auth-grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  .auth-right-grid {
+    background-image:
+      linear-gradient(rgba(155,89,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(155,89,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .auth-scan {
+    background: linear-gradient(90deg, transparent 0%, rgba(0,229,255,0.2) 30%, rgba(155,89,247,0.4) 60%, transparent 100%);
+    animation: auth-scan 7s linear infinite;
+  }
+
+  .auth-blink {
+    animation: auth-blink 2s ease-in-out infinite;
+  }
+
+  @keyframes auth-scan {
+    0% { top: 0%; opacity: 0; }
+    5% { opacity: 1; }
+    95% { opacity: 0.4; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  @keyframes auth-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  @keyframes auth-shimmer {
+    to { background-position: 200% center; }
+  }
 }

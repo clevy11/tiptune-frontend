@@ -239,8 +239,8 @@ export default function PublicEventPage() {
             </p>
             <p className="text-sm text-gray-400 mb-4">
               This event is no longer open or does not exist.
-              </p>
-              <GlowButton
+            </p>
+            <GlowButton
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   window.location.href = '/'
@@ -622,17 +622,17 @@ export default function PublicEventPage() {
 
           {/* Request Form (song request + optional tip) */}
           {actionMode === 'request_song' && !confirmationType && (
-            <GlassCard glow="pink">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
+          <GlassCard glow="pink">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Sparkles className="w-6 h-6 text-pink-400" />
-                    Request a Song
-                  </h2>
+                <Sparkles className="w-6 h-6 text-pink-400" />
+                Request a Song
+              </h2>
                   <button
                     type="button"
                     onClick={() => {
@@ -652,86 +652,86 @@ export default function PublicEventPage() {
                     <p className="text-sm text-red-200">{actionError}</p>
                   </div>
                 )}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Search for a Song *
-                    </label>
-                    <MusicSearchInput
-                      onSelect={handleSongSelect}
-                      selectedResult={selectedSong}
-                      placeholder="Type song name or artist..."
-                    />
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Search for a Song *
+                  </label>
+                  <MusicSearchInput
+                    onSelect={handleSongSelect}
+                    selectedResult={selectedSong}
+                    placeholder="Type song name or artist..."
+                  />
                     <p className="text-xs text-gray-500 mt-2">
                       If you don&apos;t find your song in search, fill in the title and artist manually below.
                     </p>
-                  </motion.div>
-                  
-                  {/* Manual input fields (shown when song is selected or for manual entry) */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.75 }}
-                    className="space-y-3 pt-2 border-t border-white/10"
-                  >
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Song Title</label>
-                      <Input
-                        placeholder="Song Title *"
-                        value={formData.songTitle}
-                        onChange={(e) =>
-                          setFormData({ ...formData, songTitle: e.target.value })
-                        }
-                        required
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Artist Name</label>
-                      <Input
-                        placeholder="Artist Name *"
-                        value={formData.songArtist}
-                        onChange={(e) =>
-                          setFormData({ ...formData, songArtist: e.target.value })
-                        }
-                        required
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Album (optional)</label>
-                      <Input
-                        placeholder="Album"
-                        value={formData.songAlbum}
-                        onChange={(e) =>
-                          setFormData({ ...formData, songAlbum: e.target.value })
-                        }
-                        className="w-full"
-                      />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1 }}
-                  >
-                    <Textarea
-                      placeholder="Message (optional)"
-                      rows={4}
-                      value={formData.message}
+                </motion.div>
+                
+                {/* Manual input fields (shown when song is selected or for manual entry) */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.75 }}
+                  className="space-y-3 pt-2 border-t border-white/10"
+                >
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Song Title</label>
+                    <Input
+                      placeholder="Song Title *"
+                      value={formData.songTitle}
                       onChange={(e) =>
-                        setFormData({ ...formData, message: e.target.value })
+                        setFormData({ ...formData, songTitle: e.target.value })
+                      }
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Artist Name</label>
+                    <Input
+                      placeholder="Artist Name *"
+                      value={formData.songArtist}
+                      onChange={(e) =>
+                        setFormData({ ...formData, songArtist: e.target.value })
+                      }
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Album (optional)</label>
+                    <Input
+                      placeholder="Album"
+                      value={formData.songAlbum}
+                      onChange={(e) =>
+                        setFormData({ ...formData, songAlbum: e.target.value })
                       }
                       className="w-full"
                     />
-                  </motion.div>
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1 }}
+                >
+                  <Textarea
+                    placeholder="Message (optional)"
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </motion.div>
 
                   {/* Optional tip */}
-                  <motion.div
+                <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.05 }}
@@ -834,9 +834,9 @@ export default function PublicEventPage() {
                   </motion.div>
                   {tipError && <p className="text-sm text-red-400 mt-2" role="alert">{tipError}</p>}
 
-                  <GlowButton 
-                    type="submit" 
-                    glowColor="pink" 
+                  <GlowButton
+                    type="submit"
+                    glowColor="pink"
                     className="w-full min-h-[48px]"
                     disabled={createMutation.isPending || isEventBlocked}
                   >
@@ -849,7 +849,7 @@ export default function PublicEventPage() {
                       formData.wantToTip && formData.tipAmount ? 'Submit & Pay' : 'Submit Request'
                     )}
                   </GlowButton>
-                </form>
+              </form>
               </motion.div>
             </GlassCard>
           )}
