@@ -1355,8 +1355,7 @@ export default function DjDashboardPage() {
                         <p className="text-gray-300 mb-2 text-sm sm:text-base">{selectedEvent.description}</p>
                       )}
                       <p className="text-xs sm:text-sm text-gray-400">
-                        {formatInRwanda(selectedEvent.startTime)} -{' '}
-                        {formatInRwanda(selectedEvent.endTime)}
+                        Starts: {formatInRwanda(selectedEvent.startTime)}
                       </p>
                     </div>
                     {qrCodeUrl && (
