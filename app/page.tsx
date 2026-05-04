@@ -150,7 +150,19 @@ export default function Home() {
             </div>
             <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-gray-400">
               <span>© {new Date().getFullYear()} TipTune</span>
-              <span className="text-gray-500">Support: titunerw@gmail.com</span>
+              <div className="flex items-center gap-3">
+                <Link href="/privacy" className="hover:text-cyan-300 transition-colors">
+                  Privacy
+                </Link>
+                <span className="text-gray-600">|</span>
+                <Link href="/terms" className="hover:text-cyan-300 transition-colors">
+                  Terms
+                </Link>
+                <span className="text-gray-600">|</span>
+                <Link href="/contact" className="hover:text-cyan-300 transition-colors">
+                  Contact
+                </Link>
+              </div>
             </div>
           </div>
         </section>
