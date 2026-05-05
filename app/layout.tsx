@@ -56,10 +56,14 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
+  manifest: '/site.webmanifest',
+  /**
+   * Google Search often ignores SVG for the result-list favicon and expects a
+   * square raster (≥48×48). We expose an explicit 48×48 PNG + app/icon.png.
+   */
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [{ url: '/favicon-48.png', sizes: '48x48', type: 'image/png' }],
+    apple: '/images/landing/logo.png',
   },
 }
 
@@ -88,7 +92,14 @@ export default function RootLayout({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'TipTune',
+    alternateName: ['tiptune.space', 'Tip Tune'],
     url: 'https://tiptune.space',
+    publisher: {
+      '@type': 'Organization',
+      name: 'TipTune',
+      url: 'https://tiptune.space',
+      logo: 'https://tiptune.space/images/landing/logo.png',
+    },
     potentialAction: {
       '@type': 'ViewAction',
       target: 'https://tiptune.space/events',
