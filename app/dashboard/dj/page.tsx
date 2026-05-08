@@ -218,6 +218,7 @@ export default function DjDashboardPage() {
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [editingEventId, setEditingEventId] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [desktopEventsCollapsed, setDesktopEventsCollapsed] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [createEventError, setCreateEventError] = useState<string | null>(null)
   const [requestFilter, setRequestFilter] = useState<string>('active')
@@ -851,6 +852,18 @@ export default function DjDashboardPage() {
                   <span className="text-xl sm:text-3xl font-bold text-gradient">DJ Control Panel</span>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDesktopEventsCollapsed((collapsed) => !collapsed)}
+                className="hidden md:inline-flex mt-3 min-h-[44px] w-fit touch-manipulation gap-2"
+                aria-pressed={!desktopEventsCollapsed}
+                aria-label={desktopEventsCollapsed ? 'Show events panel' : 'Hide events panel'}
+                title={desktopEventsCollapsed ? 'Show events panel' : 'Hide events panel'}
+              >
+                <Menu className="w-4 h-4" />
+                {desktopEventsCollapsed ? 'Show events' : 'Hide events'}
+              </Button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -1069,7 +1082,7 @@ export default function DjDashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {/* Events List — hidden on mobile (use drawer); visible from tablet (md) */}
-          <div className="hidden md:block md:col-span-1 min-w-0">
+          <div className={`${desktopEventsCollapsed ? 'hidden' : 'hidden md:block'} md:col-span-1 min-w-0`}>
             <GlassCard noEnterAnimation glow="purple">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Music className="w-5 h-5 text-purple-400" />
@@ -1268,7 +1281,7 @@ export default function DjDashboardPage() {
           </div>
 
           {/* Event Details & Requests */}
-          <div className="md:col-span-2 min-w-0">
+          <div className={`${desktopEventsCollapsed ? 'md:col-span-3' : 'md:col-span-2'} min-w-0`}>
             {/* Mobile-only: compact revenue strip + collapsible Tip-only tips (hidden from tablet up when sidebar is visible) */}
             <div className="md:hidden mb-4">
               <div className="grid grid-cols-2 gap-2 mb-2">
