@@ -212,7 +212,7 @@ MobileEventItem.displayName = 'MobileEventItem'
 
 function getShoutoutName(request: DjSongRequest): string | null {
   const name = request.payerName?.trim() || request.requesterName?.trim()
-  if (!name || name.toLowerCase() === 'anonymous') return null
+  if (!name || name.toLowerCase() === 'anonymous' || name.toLowerCase() === 'guest') return null
   return name
 }
 
@@ -234,19 +234,19 @@ function RequestShoutout({ request, compact = false }: { request: DjSongRequest;
   if (tipAmount <= 0) return null
 
   return (
-    <div className={`mt-3 rounded-lg border border-green-400/40 bg-green-500/10 ${compact ? 'p-2' : 'p-3'}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-1 text-xs font-semibold uppercase tracking-normal text-white">
-          <User className="h-3.5 w-3.5 text-green-300" />
-          {"Payer's name"}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-1 text-xs font-semibold text-green-200">
-          <Banknote className="h-3 w-3" />
+    <div className={`mt-3 rounded-xl border border-green-400/40 bg-gradient-to-br from-green-500/15 to-green-600/5 ${compact ? 'p-2.5' : 'p-3.5'}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <User className="h-4 w-4 shrink-0 text-green-300" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-green-300">{shoutoutName ? 'Tipper' : 'Tipped'}</span>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full border border-green-400/40 bg-green-500/20 px-2.5 py-1 text-xs font-bold text-green-200">
+          <Banknote className="h-3.5 w-3.5" />
           {tipAmount.toLocaleString()} RWF
         </span>
       </div>
       {shoutoutName && (
-        <p className={`${compact ? 'text-lg' : 'text-2xl'} mt-2 font-bold leading-tight text-white`}>
+        <p className={`${compact ? 'text-base' : 'text-xl'} mt-1.5 font-bold leading-tight tracking-tight text-white`}>
           {shoutoutName}
         </p>
       )}
@@ -1577,78 +1577,99 @@ export default function DjDashboardPage() {
                           <>
                             {displayed.map((request) => (
                               <div
-                          key={request.id}
-                                className={`glass rounded-lg p-4 transition-colors hover:bg-white/5 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20' : ''}`}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium">{request.songTitle}</p>
+                                key={request.id}
+                                className={`glass rounded-xl p-0 overflow-hidden transition-all hover:bg-white/5 ${
+                                  highlightRequestId === request.id
+                                    ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20'
+                                    : 'border border-white/8'
+                                }`}
+                              >
+                                {/* Song track header */}
+                                <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5 border-b border-white/8 bg-white/[0.03]">
+                                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                                      <Music className="w-4.5 h-4.5 text-purple-300" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-bold text-white text-base leading-tight truncate">{request.songTitle}</p>
+                                      <p className="text-xs text-purple-300/80 font-medium truncate mt-0.5">{request.songArtist}</p>
+                                    </div>
+                                  </div>
+                                  <span
+                                    className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                      request.status === RequestStatus.ACCEPTED
+                                        ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                                        : request.status === RequestStatus.DECLINED
+                                        ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                        : request.status === RequestStatus.PLAYED
+                                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                                        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                                    }`}
+                                  >
+                                    {request.status}
+                                  </span>
+                                </div>
+
+                                {/* Body */}
+                                <div className="px-4 py-3">
+                                  <RequestShoutout request={request} />
+                                  {request.message && (
+                                    <p className="text-sm text-gray-400 mt-2 italic">"{request.message}"</p>
+                                  )}
+                                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                                    {request.requesterName && (
+                                      <p className="text-xs text-gray-500">
+                                        <span className="text-gray-400 font-medium">{request.requesterName}</span>
+                                      </p>
+                                    )}
+                                    {request.createdAt && (
+                                      <p className="text-xs text-gray-600">{formatInRwanda(request.createdAt)}</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Actions */}
+                                {(request.status === RequestStatus.PENDING || request.status === RequestStatus.ACCEPTED) && (
+                                  <div className="px-4 pb-3 pt-1">
+                                    {request.status === RequestStatus.PENDING && (
+                                      <div className="flex gap-2">
+                                        <GlowButton noMotion
+                                          onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)}
+                                          glowColor="green"
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex-1"
+                                        >
+                                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                                          Accept
+                                        </GlowButton>
+                                        <GlowButton noMotion
+                                          onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)}
+                                          glowColor="red"
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex-1"
+                                        >
+                                          <XCircle className="w-4 h-4 mr-1" />
+                                          Decline
+                                        </GlowButton>
+                                      </div>
+                                    )}
+                                    {request.status === RequestStatus.ACCEPTED && (
+                                      <GlowButton noMotion
+                                        onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)}
+                                        glowColor="blue"
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full"
+                                      >
+                                        <PlayCircle className="w-4 h-4 mr-1" />
+                                        Mark as Played
+                                      </GlowButton>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <p className="text-sm text-gray-400">{request.songArtist}</p>
-                              <RequestShoutout request={request} />
-                              {request.message && (
-                                <p className="text-sm text-gray-500 mt-1">{request.message}</p>
-                              )}
-                              <p className="text-xs text-gray-500 mt-1">
-                                Requested by {request.requesterName || 'Guest'}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {selectedEvent?.name && <span>{selectedEvent.name} · </span>}
-                                {request.createdAt && formatInRwanda(request.createdAt)}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                request.status === RequestStatus.ACCEPTED
-                                  ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                                  : request.status === RequestStatus.DECLINED
-                                  ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                                  : request.status === RequestStatus.PLAYED
-                                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                                  : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
-                              }`}
-                            >
-                              {request.status}
-                            </span>
-                          </div>
-                          {request.status === RequestStatus.PENDING && (
-                            <div className="flex gap-2 mt-3">
-                              <GlowButton noMotion
-                                onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)}
-                                glowColor="green"
-                                size="sm"
-                                variant="outline"
-                                className="flex-1"
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                Accept
-                              </GlowButton>
-                              <GlowButton noMotion
-                                onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)}
-                                glowColor="red"
-                                size="sm"
-                                variant="outline"
-                                className="flex-1"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Decline
-                              </GlowButton>
-                            </div>
-                          )}
-                          {request.status === RequestStatus.ACCEPTED && (
-                            <GlowButton noMotion
-                              onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)}
-                              glowColor="blue"
-                              size="sm"
-                              variant="outline"
-                              className="w-full mt-3"
-                            >
-                              <PlayCircle className="w-4 h-4 mr-1" />
-                              Mark as Played
-                            </GlowButton>
-                          )}
-                        </div>
                             ))}
                             {requests.length > requestsDisplayCount && (
                               <button
@@ -1844,7 +1865,7 @@ export default function DjDashboardPage() {
 
         {/* Full-screen request mode overlay */}
         {fullScreenRequests && selectedEvent && (
-            <div className="fixed inset-0 z-[100] bg-gray-900/98 backdrop-blur flex flex-col">
+            <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-md flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <div className="flex items-center gap-4">
                   <span className="text-lg font-bold text-white">{selectedEvent.name} — Requests</span>
@@ -1904,48 +1925,103 @@ export default function DjDashboardPage() {
                   <option value="oldest">Oldest</option>
                 </select>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto bg-black/60 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
+                <div className="p-4 sm:p-8">
                 {requests && requests.length > 0 ? (
-                  <div className="space-y-3 max-w-2xl mx-auto">
+                  <div className="space-y-4 max-w-2xl mx-auto">
                     {requests.slice(0, requestsDisplayCount).map((request) => (
                       <div
                         key={request.id}
-                        className={`glass rounded-lg p-4 transition-colors hover:bg-white/5 ${highlightRequestId === request.id ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900' : ''}`}
+                        className={`glass rounded-xl p-0 overflow-hidden transition-all hover:bg-white/5 ${
+                          highlightRequestId === request.id
+                            ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20'
+                            : 'border border-white/8'
+                        }`}
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium">{request.songTitle}</p>
+                        {/* Song track header */}
+                        <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5 border-b border-white/8 bg-white/[0.03]">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                              <Music className="w-4.5 h-4.5 text-purple-300" />
                             </div>
-                            <p className="text-sm text-gray-400">{request.songArtist}</p>
-                            <RequestShoutout request={request} compact />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Requested by {request.requesterName || 'Guest'} · {' '}
-                              {request.createdAt && formatInRwanda(request.createdAt)}
-                            </p>
+                            <div className="min-w-0">
+                              <p className="font-bold text-white text-base leading-tight truncate">{request.songTitle}</p>
+                              <p className="text-xs text-purple-300/80 font-medium truncate mt-0.5">{request.songArtist}</p>
+                            </div>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            request.status === RequestStatus.PENDING ? 'bg-yellow-500/20 text-yellow-400' :
-                            request.status === RequestStatus.ACCEPTED ? 'bg-green-500/20 text-green-400' :
-                            request.status === RequestStatus.DECLINED ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'
-                          }`}>
+                          <span
+                            className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              request.status === RequestStatus.ACCEPTED
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                                : request.status === RequestStatus.DECLINED
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                : request.status === RequestStatus.PLAYED
+                                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                                : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                            }`}
+                          >
                             {request.status}
                           </span>
                         </div>
-                        {request.status === RequestStatus.PENDING && (
-                          <div className="flex gap-2 mt-3">
-                            <GlowButton noMotion onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)} glowColor="green" size="sm" variant="outline" className="flex-1">
-                              <CheckCircle2 className="w-4 h-4 mr-1" /> Accept
-                            </GlowButton>
-                            <GlowButton noMotion onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)} glowColor="red" size="sm" variant="outline" className="flex-1">
-                              <XCircle className="w-4 h-4 mr-1" /> Decline
-                            </GlowButton>
+
+                        {/* Body */}
+                        <div className="px-4 py-3">
+                          <RequestShoutout request={request} compact />
+                          {request.message && (
+                            <p className="text-sm text-gray-400 mt-2 italic">"{request.message}"</p>
+                          )}
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                            {request.requesterName && (
+                              <p className="text-xs text-gray-500">
+                                <span className="text-gray-400 font-medium">{request.requesterName}</span>
+                              </p>
+                            )}
+                            {request.createdAt && (
+                              <p className="text-xs text-gray-600">{formatInRwanda(request.createdAt)}</p>
+                            )}
                           </div>
-                        )}
-                        {request.status === RequestStatus.ACCEPTED && (
-                          <GlowButton noMotion onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)} glowColor="blue" size="sm" variant="outline" className="w-full mt-3">
-                            <PlayCircle className="w-4 h-4 mr-1" /> Mark as Played
-                          </GlowButton>
+                        </div>
+
+                        {/* Actions */}
+                        {(request.status === RequestStatus.PENDING || request.status === RequestStatus.ACCEPTED) && (
+                          <div className="px-4 pb-3 pt-1">
+                            {request.status === RequestStatus.PENDING && (
+                              <div className="flex gap-2">
+                                <GlowButton noMotion
+                                  onClick={() => handleStatusUpdate(request.id, RequestStatus.ACCEPTED)}
+                                  glowColor="green"
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                                  Accept
+                                </GlowButton>
+                                <GlowButton noMotion
+                                  onClick={() => handleStatusUpdate(request.id, RequestStatus.DECLINED)}
+                                  glowColor="red"
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1"
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Decline
+                                </GlowButton>
+                              </div>
+                            )}
+                            {request.status === RequestStatus.ACCEPTED && (
+                              <GlowButton noMotion
+                                onClick={() => handleStatusUpdate(request.id, RequestStatus.PLAYED)}
+                                glowColor="blue"
+                                size="sm"
+                                variant="outline"
+                                className="w-full"
+                              >
+                                <PlayCircle className="w-4 h-4 mr-1" />
+                                Mark as Played
+                              </GlowButton>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -1953,7 +2029,7 @@ export default function DjDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setRequestsDisplayCount((c) => c + 25)}
-                        className="w-full py-3 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm"
+                        className="w-full py-3 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium border border-white/10"
                       >
                         Show more ({requests.length - requestsDisplayCount} remaining)
                       </button>
@@ -1962,6 +2038,7 @@ export default function DjDashboardPage() {
                 ) : (
                   <p className="text-gray-400 text-center py-12">No requests in this view</p>
                 )}
+                </div>
               </div>
             </div>
           )}

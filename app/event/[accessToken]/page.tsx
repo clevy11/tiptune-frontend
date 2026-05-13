@@ -384,23 +384,31 @@ export default function PublicEventPage() {
                     type="button"
                     onClick={() => setActionMode('request_song')}
                     glowColor="pink"
-                    className="min-h-[112px] w-full flex-col items-center gap-2 rounded-xl py-6 text-base"
+                    className="min-h-[140px] w-full flex-col items-center gap-3 rounded-2xl py-7 text-base"
                     disabled={isEventBlocked}
                   >
-                    <Radio className="h-9 w-9" />
-                    <span>Request a song</span>
-                    <span className="text-xs font-normal text-white/70">Search, send, and let the DJ review it</span>
+                    <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 border border-white/20 shadow-inner">
+                      <Radio className="h-8 w-8" />
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-lg font-bold">Request a song</span>
+                      <span className="text-xs font-normal text-white/70">Search, send, and let the DJ review it</span>
+                    </div>
                   </GlowButton>
                   <GlowButton
                     type="button"
                     onClick={() => setActionMode('tip_only')}
                     glowColor="green"
-                    className="min-h-[104px] w-full flex-col items-center gap-2 rounded-xl border border-green-300/40 bg-green-600/90 py-5 text-base text-white shadow-lg shadow-green-500/25 hover:bg-green-500"
+                    className="min-h-[140px] w-full flex-col items-center gap-3 rounded-2xl border border-green-300/40 bg-green-600/90 py-7 text-base text-white shadow-lg shadow-green-500/25 hover:bg-green-500"
                     disabled={isEventBlocked}
                   >
-                    <Heart className="h-8 w-8" />
-                    <span>Tip the DJ</span>
-                    <span className="text-xs font-normal text-white/75">Support the set without requesting</span>
+                    <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 border border-white/20 shadow-inner">
+                      <Heart className="h-8 w-8" />
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-lg font-bold">Tip the DJ</span>
+                      <span className="text-xs font-normal text-white/75">Support the set without requesting</span>
+                    </div>
                   </GlowButton>
                 </div>
               </motion.div>
