@@ -21,9 +21,6 @@ export const metadata: Metadata = {
     'Rwanda nightlife',
     'Kigali DJs',
   ],
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     type: 'website',
     url: 'https://tiptune.space',

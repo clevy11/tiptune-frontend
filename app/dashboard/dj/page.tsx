@@ -1480,7 +1480,7 @@ export default function DjDashboardPage() {
                                 <p className="text-sm text-gray-500 mt-1">{request.message}</p>
                               )}
                               <p className="text-xs text-gray-500 mt-1">
-                                Requested by {request.requesterName}
+                                Requested by 
                                 {request.payerName && ` · ${request.payerName}`}
                                 {request.payerPhone && ` · ${request.payerPhone}`}
                               </p>
