@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { GlowButton } from '@/components/GlowButton'
-import { CheckCircle2, XCircle, PlayCircle, User } from 'lucide-react'
+import { CheckCircle2, XCircle, PlayCircle, User, Banknote } from 'lucide-react'
 import type { DjSongRequest } from '@/lib/types'
 import { RequestStatus } from '@/lib/types'
 
@@ -12,16 +12,33 @@ interface DjRequestCardProps {
 }
 
 function DjRequestCardInner({ request, onStatusUpdate }: DjRequestCardProps) {
+  const tipAmount = Number(request.tipAmount) || 0
+  const shoutoutName = request.payerName?.trim() || request.requesterName?.trim()
+
   return (
     <div className="glass rounded-lg p-4 transition-colors hover:bg-white/5">
       <div className="flex justify-between items-start mb-2">
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{request.songTitle}</p>
           <p className="text-sm text-gray-400 truncate">{request.songArtist}</p>
-          {request.requesterName && (
-            <div className="flex items-center gap-1.5 mt-2 mb-1">
-              <User className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
-              <span className="text-sm font-medium text-purple-300">{request.requesterName}</span>
+          {tipAmount > 0 && (
+            <div className="mt-3 rounded-lg border border-green-400/40 bg-green-500/10 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-1 text-xs font-semibold uppercase tracking-normal text-white">
+                  <User className="h-3.5 w-3.5 text-green-300" />
+                  {"Payer's name"}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-1 text-xs font-semibold text-green-200">
+                  <Banknote className="h-3 w-3" />
+                  {tipAmount.toLocaleString()} RWF
+                </span>
+              </div>
+              {shoutoutName && (
+                <p className="mt-2 text-2xl font-bold leading-tight text-white">{shoutoutName}</p>
+              )}
+              {request.payerPhone && (
+                <p className="mt-1 text-xs text-gray-400">{request.payerPhone}</p>
+              )}
             </div>
           )}
           {request.message && (

@@ -273,6 +273,11 @@ export const djApi = {
     return response.data
   },
 
+  getEventTipRecords: async (eventId: number): Promise<TipRecordResponse[]> => {
+    const response = await api.get<TipRecordResponse[]>(`/dj/events/${eventId}/tip-records`)
+    return response.data
+  },
+
   getRevenueSummary: async (params?: { from?: string; to?: string }): Promise<DjRevenueSummaryResponse> => {
     const sp = new URLSearchParams()
     if (params?.from) sp.set('from', params.from)

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, DollarSign, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle, QrCode, Download, FileDown, User } from 'lucide-react'
+import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, Banknote, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle, QrCode, Download, FileDown, User, Users } from 'lucide-react'
 import type { DjEvent, DjSongRequest, EventRequest, Notification, TipInfoResponse, TipRecordResponse, TipSettingsRequest, DjRevenueSummaryResponse } from '@/lib/types'
 import { EventStatus, RequestStatus, Role, TipPaymentType } from '@/lib/types'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
@@ -210,6 +210,83 @@ const MobileEventItem = memo(({
 ))
 MobileEventItem.displayName = 'MobileEventItem'
 
+function getShoutoutName(request: DjSongRequest): string | null {
+  const name = request.payerName?.trim() || request.requesterName?.trim()
+  if (!name || name.toLowerCase() === 'anonymous') return null
+  return name
+}
+
+function formatTipDate(value: string, options?: Intl.DateTimeFormatOptions): string {
+  if (!value) return ''
+  return new Date(value).toLocaleDateString(undefined, options ?? {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function RequestShoutout({ request, compact = false }: { request: DjSongRequest; compact?: boolean }) {
+  const shoutoutName = getShoutoutName(request)
+  const tipAmount = Number(request.tipAmount) || 0
+
+  if (tipAmount <= 0) return null
+
+  return (
+    <div className={`mt-3 rounded-lg border border-green-400/40 bg-green-500/10 ${compact ? 'p-2' : 'p-3'}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-1 text-xs font-semibold uppercase tracking-normal text-white">
+          <User className="h-3.5 w-3.5 text-green-300" />
+          {"Payer's name"}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-1 text-xs font-semibold text-green-200">
+          <Banknote className="h-3 w-3" />
+          {tipAmount.toLocaleString()} RWF
+        </span>
+      </div>
+      {shoutoutName && (
+        <p className={`${compact ? 'text-lg' : 'text-2xl'} mt-2 font-bold leading-tight text-white`}>
+          {shoutoutName}
+        </p>
+      )}
+      {request.payerPhone && (
+        <p className="mt-1 text-xs text-gray-400">{request.payerPhone}</p>
+      )}
+    </div>
+  )
+}
+
+function TipOnlySupportersList({ tips, limit }: { tips?: TipRecordResponse[]; limit?: number }) {
+  const visibleTips = typeof limit === 'number' ? tips?.slice(0, limit) : tips
+
+  if (!visibleTips || visibleTips.length === 0) {
+    return <p className="py-4 text-center text-sm text-gray-400">No tip-only supporters yet</p>
+  }
+
+  return (
+    <div className="space-y-2">
+      {visibleTips.map((tip) => {
+        const payerName = tip.payerName?.trim() || 'Anonymous supporter'
+        return (
+          <div key={tip.id} className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-base font-semibold text-white">{payerName}</p>
+                {tip.payerPhone && <p className="mt-0.5 text-xs text-gray-400">{tip.payerPhone}</p>}
+              </div>
+              <span className="shrink-0 rounded-full border border-green-400/40 bg-green-500/15 px-2.5 py-1 text-xs font-bold text-green-200">
+                {Number(tip.amount).toLocaleString()} RWF
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">{formatTipDate(tip.createdAt)}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function DjDashboardPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -234,6 +311,8 @@ export default function DjDashboardPage() {
   const [showTipSettingsForm, setShowTipSettingsForm] = useState(false)
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
   const [mobileTipsOpen, setMobileTipsOpen] = useState(false)
+  const [tipOnlySupportersOpen, setTipOnlySupportersOpen] = useState(false)
+  const [eventTipSupportersOpen, setEventTipSupportersOpen] = useState(false)
   const [newEvent, setNewEvent] = useState<EventRequest>({
     name: '',
     description: '',
@@ -316,6 +395,13 @@ export default function DjDashboardPage() {
     staleTime: 1 * 60 * 1000,
   })
 
+  const { data: eventTipRecords } = useQuery<TipRecordResponse[]>({
+    queryKey: ['dj-event-tip-records', selectedEventId],
+    queryFn: () => djApi.getEventTipRecords(selectedEventId!),
+    enabled: !!selectedEventId && !!currentUser && (currentUser.role === Role.DJ || currentUser.role === Role.ARTIST),
+    staleTime: 1 * 60 * 1000,
+  })
+
   const [revenueDateFrom, setRevenueDateFrom] = useState('')
   const [revenueDateTo, setRevenueDateTo] = useState('')
   const { data: revenueSummary } = useQuery<DjRevenueSummaryResponse>({
@@ -361,6 +447,7 @@ export default function DjDashboardPage() {
       if (msg.includes('tip')) {
         queryClient.invalidateQueries({ queryKey: ['dj-revenue-summary'] })
         queryClient.invalidateQueries({ queryKey: ['dj-tip-records'] })
+        queryClient.invalidateQueries({ queryKey: ['dj-event-tip-records'] })
       }
     }
 
@@ -381,6 +468,7 @@ export default function DjDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['dj-requests', selectedEventId, apiFilter, requestSort] })
       // Event tips affect DJ totals too
       queryClient.invalidateQueries({ queryKey: ['dj-revenue-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['dj-event-tip-records', selectedEventId] })
     }
     websocketService.subscribeToEventRevenue(selectedEventId, handleRevenue)
     return () => {
@@ -721,6 +809,19 @@ export default function DjDashboardPage() {
                   >
                     <Download className="w-4 h-4" />
                     Download QR
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      setTipOnlySupportersOpen(true)
+                      setMobileMenuOpen(false)
+                    }}
+                  >
+                    <Users className="w-4 h-4" />
+                    View tip-only supporters
                   </Button>
                   {showTipSettingsForm ? (
                     <div className="space-y-2 pt-2 border-t border-white/10">
@@ -1155,6 +1256,16 @@ export default function DjDashboardPage() {
                         <Download className="w-4 h-4" />
                         Download QR
                       </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setTipOnlySupportersOpen(true)}
+                      >
+                        <Users className="w-4 h-4" />
+                        View supporters
+                      </Button>
                       {!showTipSettingsForm && (
                         <Button
                           type="button"
@@ -1252,27 +1363,19 @@ export default function DjDashboardPage() {
             {/* Tip-only tips (standalone, not from events) */}
             <GlassCard noEnterAnimation glow="green" className="mt-4">
               <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-green-400" />
+                <Banknote className="w-5 h-5 text-green-400" />
                 Tip-only tips
               </h2>
               <p className="text-xs text-gray-400 mb-3">Tips from your permanent link (no song request).</p>
               {standaloneTips && standaloneTips.length > 0 ? (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {standaloneTips.map((t) => (
-                    <div key={t.id} className="rounded-lg bg-white/5 border border-white/10 p-2 text-sm">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="font-medium text-green-300">{Number(t.amount).toLocaleString()} RWF</span>
-                        <span className="text-xs text-gray-500">
-                          {typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
-                          </span>
-                      </div>
-                      {(t.payerName || t.payerPhone) && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {[t.payerName, t.payerPhone].filter(Boolean).join(' · ')}
-                        </p>
-                        )}
-                      </div>
-                  ))}
+                  <TipOnlySupportersList tips={standaloneTips} limit={8} />
+                  {standaloneTips.length > 8 && (
+                    <Button type="button" variant="ghost" size="sm" className="w-full gap-2 text-green-300" onClick={() => setTipOnlySupportersOpen(true)}>
+                      <Users className="h-4 w-4" />
+                      View all {standaloneTips.length}
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <p className="text-gray-400 text-center py-4 text-sm">No tip-only tips yet</p>
@@ -1304,7 +1407,7 @@ export default function DjDashboardPage() {
                   aria-expanded={mobileTipsOpen}
                 >
                   <span className="flex items-center gap-2 text-sm font-medium text-gray-200">
-                    <DollarSign className="w-4 h-4 text-green-400" />
+                    <Banknote className="w-4 h-4 text-green-400" />
                     Tip-only tips {standaloneTips && standaloneTips.length > 0 && (
                       <span className="text-green-400">({standaloneTips.length})</span>
                     )}
@@ -1314,24 +1417,15 @@ export default function DjDashboardPage() {
                 {mobileTipsOpen && (
                   <div className="pt-2 border-t border-white/10 space-y-2 max-h-48 overflow-y-auto">
                     {standaloneTips && standaloneTips.length > 0 ? (
-                      standaloneTips.slice(0, 10).map((t) => (
-                        <div key={t.id} className="rounded-lg bg-white/5 border border-white/10 p-2 text-sm">
-                          <div className="flex justify-between items-start gap-2">
-                            <span className="font-medium text-green-300">{Number(t.amount).toLocaleString()} RWF</span>
-                            <span className="text-xs text-gray-500">
-                              {typeof t.createdAt === 'string' ? new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
-                            </span>
-                          </div>
-                          {(t.payerName || t.payerPhone) && (
-                            <p className="text-xs text-gray-400 mt-1">{[t.payerName, t.payerPhone].filter(Boolean).join(' · ')}</p>
-                          )}
-                        </div>
-                  ))
+                      <TipOnlySupportersList tips={standaloneTips} limit={10} />
                 ) : (
                       <p className="text-gray-400 text-center py-2 text-sm">No tip-only tips yet</p>
                     )}
                     {standaloneTips && standaloneTips.length > 10 && (
-                      <p className="text-xs text-gray-500 text-center">+{standaloneTips.length - 10} more</p>
+                      <Button type="button" variant="ghost" size="sm" className="w-full gap-2 text-green-300" onClick={() => setTipOnlySupportersOpen(true)}>
+                        <Users className="h-4 w-4" />
+                        View all {standaloneTips.length}
+                      </Button>
                 )}
               </div>
                 )}
@@ -1370,6 +1464,19 @@ export default function DjDashboardPage() {
                       <p className="text-xs sm:text-sm text-gray-400">
                         Starts: {formatInRwanda(selectedEvent.startTime)}
                       </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 gap-2 border-green-400/30 text-green-200 hover:bg-green-400/10"
+                        onClick={() => setEventTipSupportersOpen(true)}
+                      >
+                        <Users className="h-4 w-4" />
+                        View event tippers
+                        <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-semibold text-green-100">
+                          {eventTipRecords?.length ?? 0}
+                        </span>
+                      </Button>
                     </div>
                     {qrCodeUrl && (
                       <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
@@ -1468,21 +1575,14 @@ export default function DjDashboardPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium">{request.songTitle}</p>
-                                {(Number(request.tipAmount) || 0) > 0 && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium border border-green-500/50">
-                                    <DollarSign className="w-3 h-3" />
-                                    {Number(request.tipAmount).toLocaleString()} RWF
-                                  </span>
-                                )}
                               </div>
                               <p className="text-sm text-gray-400">{request.songArtist}</p>
+                              <RequestShoutout request={request} />
                               {request.message && (
                                 <p className="text-sm text-gray-500 mt-1">{request.message}</p>
                               )}
                               <p className="text-xs text-gray-500 mt-1">
-                                Requested by 
-                                {request.payerName && ` · ${request.payerName}`}
-                                {request.payerPhone && ` · ${request.payerPhone}`}
+                                Requested by {request.requesterName || 'Guest'}
                               </p>
                               <p className="text-xs text-gray-500 mt-0.5">
                                 {selectedEvent?.name && <span>{selectedEvent.name} · </span>}
@@ -1654,6 +1754,85 @@ export default function DjDashboardPage() {
           </div>
         </div>
 
+        {tipOnlySupportersOpen && (
+          <div className="fixed inset-0 z-[100] bg-gray-900/98 backdrop-blur flex flex-col">
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-green-300" />
+                  <h2 className="truncate text-lg font-bold text-white">Tip-only supporters</h2>
+                </div>
+                <p className="mt-1 text-sm text-gray-400">
+                  Permanent QR tips without song requests
+                  {standaloneTips && standaloneTips.length > 0 ? ` · ${standaloneTips.length} total` : ''}
+                </p>
+              </div>
+              <GlowButton noMotion
+                type="button"
+                onClick={() => setTipOnlySupportersOpen(false)}
+                glowColor="red"
+                size="sm"
+                className="min-h-[44px] shrink-0"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Close
+              </GlowButton>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="mx-auto max-w-2xl">
+                <div className="mb-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                    <p className="text-xs text-gray-400">Tip-only revenue</p>
+                    <p className="mt-1 text-xl font-bold text-green-300">
+                      {(revenueSummary ? Number(revenueSummary.standaloneTipRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                    <p className="text-xs text-gray-400">Supporters</p>
+                    <p className="mt-1 text-xl font-bold text-white">{standaloneTips?.length ?? 0}</p>
+                  </div>
+                </div>
+                <TipOnlySupportersList tips={standaloneTips} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {eventTipSupportersOpen && selectedEvent && (
+          <div className="fixed inset-0 z-[100] bg-gray-900/98 backdrop-blur flex flex-col">
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-green-300" />
+                  <h2 className="truncate text-lg font-bold text-white">Event tippers</h2>
+                </div>
+                <p className="mt-1 truncate text-sm text-gray-400">
+                  {selectedEvent.name} · tips without song requests
+                </p>
+              </div>
+              <GlowButton noMotion
+                type="button"
+                onClick={() => setEventTipSupportersOpen(false)}
+                glowColor="red"
+                size="sm"
+                className="min-h-[44px] shrink-0"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Close
+              </GlowButton>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="mx-auto max-w-2xl">
+                <div className="mb-4 rounded-lg border border-green-400/25 bg-green-500/10 p-4">
+                  <p className="text-xs text-gray-400">Event tip-only supporters</p>
+                  <p className="mt-1 text-2xl font-bold text-white">{eventTipRecords?.length ?? 0}</p>
+                </div>
+                <TipOnlySupportersList tips={eventTipRecords} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Full-screen request mode overlay */}
         {fullScreenRequests && selectedEvent && (
             <div className="fixed inset-0 z-[100] bg-gray-900/98 backdrop-blur flex flex-col">
@@ -1728,21 +1907,11 @@ export default function DjDashboardPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium">{request.songTitle}</p>
-                              {(Number(request.tipAmount) || 0) > 0 && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
-                                  {Number(request.tipAmount).toLocaleString()} RWF
-                                </span>
-                              )}
                             </div>
                             <p className="text-sm text-gray-400">{request.songArtist}</p>
-                            {request.requesterName && (
-                              <div className="flex items-center gap-1.5 mt-2 mb-1">
-                                <User className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
-                                <span className="text-sm font-medium text-purple-300">{request.requesterName}</span>
-                              </div>
-                            )}
+                            <RequestShoutout request={request} compact />
                             <p className="text-xs text-gray-500 mt-1">
-                              {request.payerPhone && `${request.payerPhone} · `}
+                              Requested by {request.requesterName || 'Guest'} · {' '}
                               {request.createdAt && formatInRwanda(request.createdAt)}
                             </p>
                           </div>

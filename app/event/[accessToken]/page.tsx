@@ -10,7 +10,7 @@ import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Music, Send, CheckCircle2, Sparkles, Clock, Home, DollarSign, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
+import { Music, Send, CheckCircle2, Sparkles, Clock, Home, Banknote, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
 import { SiInstagram, SiMixcloud } from 'react-icons/si'
 import type { Event, PublicSongRequestCreateRequest, MusicSearchResult, ProfileLinkResponse } from '@/lib/types'
 import { EventStatus, TipPaymentType, ProfileLinkType } from '@/lib/types'
@@ -20,6 +20,10 @@ import { getApiErrorMessage } from '@/lib/apiClient'
 
 type EventActionMode = 'choose' | 'tip_only' | 'request_song' | 'confirmation'
 type ConfirmationType = 'song_request' | 'tip_only' | null
+
+function toTelUrl(ussd: string): string {
+  return `tel:${ussd.replace(/#/g, '%23')}`
+}
 
 async function submitTipAndOpenTel(
   submit: () => Promise<void>,
@@ -31,15 +35,12 @@ async function submitTipAndOpenTel(
   setActionMode?: (mode: EventActionMode) => void
 ) {
   setThankYou(true)
+  window.location.href = telUrl
   try {
     await submit()
     // Show confirmation screen only on success
     if (setConfirmationType) setConfirmationType('tip_only')
     if (setActionMode) setActionMode('confirmation')
-    // Trigger payment dial after showing confirmation
-    setTimeout(() => {
-      window.location.href = telUrl
-    }, 1200)
   } catch (e) {
     const msg = getApiErrorMessage(e)
     console.error('Failed to record tip:', e)
@@ -118,11 +119,7 @@ export default function PublicEventPage() {
         setIsTriggeringPayment(true)
         const safeAmount = Math.max(1, Math.min(500000, Math.floor(variables.tipAmount)))
         const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
-        const telUrl = `tel:${ussd}`
-        // Delay slightly to show success message, then trigger payment
-        setTimeout(() => {
-          window.location.href = telUrl
-        }, 1200)
+        window.location.href = toTelUrl(ussd)
       }
     },
     onError: (error: any) => {
@@ -386,7 +383,7 @@ export default function PublicEventPage() {
                     className="w-full py-6 flex flex-col items-center gap-2"
                     disabled={isEventBlocked}
                   >
-                    <DollarSign className="w-8 h-8" />
+                    <Banknote className="w-8 h-8" />
                     <span>Tip only</span>
                   </GlowButton>
                   <GlowButton
@@ -410,7 +407,7 @@ export default function PublicEventPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <DollarSign className="w-6 h-6 text-green-400" />
+                    <Banknote className="w-6 h-6 text-green-400" />
                     Tip the DJ
                   </h2>
                   <button
@@ -482,7 +479,7 @@ export default function PublicEventPage() {
                     const raw = Number(formData.tipAmount)
                     const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
                     const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
-                    const telUrl = `tel:${ussd}`
+                    const telUrl = toTelUrl(ussd)
                     const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
                     return (
                       <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">

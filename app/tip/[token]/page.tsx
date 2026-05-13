@@ -7,11 +7,15 @@ import { motion } from 'framer-motion'
 import { AnimatedBackground } from '@/components/AnimatedBackground'
 import { GlassCard } from '@/components/GlassCard'
 import { Input } from '@/components/ui/input'
-import { DollarSign, Home, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
+import { Banknote, Home, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
 import { SiInstagram, SiMixcloud } from 'react-icons/si'
 import { publicTipApi } from '@/lib/api'
 import type { TipInfoResponse, ProfileLinkResponse } from '@/lib/types'
 import { TipPaymentType, ProfileLinkType } from '@/lib/types'
+
+function toTelUrl(ussd: string): string {
+  return `tel:${ussd.replace(/#/g, '%23')}`
+}
 
 async function submitAndOpenTel(
   submit: () => Promise<void>,
@@ -19,14 +23,12 @@ async function submitAndOpenTel(
   setThankYou: (v: boolean) => void
 ) {
   setThankYou(true)
+  window.location.href = telUrl
   try {
     await submit()
   } catch (e) {
     console.error('Failed to record tip:', e)
   }
-  setTimeout(() => {
-    window.location.href = telUrl
-  }, 1200)
 }
 
 export default function PermanentTipPage() {
@@ -54,7 +56,7 @@ export default function PermanentTipPage() {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="relative z-10 text-center">
-          <DollarSign className="w-16 h-16 mx-auto mb-4 text-green-400 animate-pulse" />
+          <Banknote className="w-16 h-16 mx-auto mb-4 text-green-400 animate-pulse" />
           <p className="text-xl text-gray-300">Loading...</p>
         </div>
       </div>
@@ -70,7 +72,7 @@ export default function PermanentTipPage() {
           animate={{ opacity: 1 }}
           className="relative z-10 text-center"
         >
-          <DollarSign className="w-16 h-16 mx-auto mb-4 text-green-400 animate-pulse" />
+          <Banknote className="w-16 h-16 mx-auto mb-4 text-green-400 animate-pulse" />
           <p className="text-xl text-gray-300">Loading...</p>
         </motion.div>
       </div>
@@ -87,7 +89,7 @@ export default function PermanentTipPage() {
           className="relative z-10 max-w-md w-full"
         >
           <GlassCard glow="red" className="p-8 text-center">
-            <DollarSign className="w-16 h-16 mx-auto mb-4 text-red-400" />
+            <Banknote className="w-16 h-16 mx-auto mb-4 text-red-400" />
             <h2 className="text-2xl font-bold mb-4 text-red-400">Link not found</h2>
             <p className="text-gray-300 mb-6">
               {error instanceof Error ? error.message : 'This tip link is invalid or has expired.'}
@@ -116,7 +118,7 @@ export default function PermanentTipPage() {
           className="max-w-md mx-auto space-y-6"
         >
           <GlassCard glow="green" className="text-center">
-            <DollarSign className="w-14 h-14 text-green-400 mx-auto mb-3" />
+            <Banknote className="w-14 h-14 text-green-400 mx-auto mb-3" />
             <h1 className="text-2xl font-bold mb-1">Tip {tipInfo.djName}</h1>
             <p className="text-gray-400 text-sm">Send a tip via MoMo</p>
           </GlassCard>
@@ -213,7 +215,7 @@ export default function PermanentTipPage() {
                 const raw = Number(formData.tipAmount)
                 const safeAmount = Number.isFinite(raw) ? Math.max(1, Math.min(500000, Math.floor(raw))) : 0
                 const ussd = `${ussdPrefix}${paymentValue}*${safeAmount}#`
-                const telUrl = `tel:${ussd}`
+                const telUrl = toTelUrl(ussd)
                 const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
                 return (
                   <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-3">
