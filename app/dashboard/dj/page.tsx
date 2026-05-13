@@ -310,7 +310,7 @@ export default function DjDashboardPage() {
   })
   const [showTipSettingsForm, setShowTipSettingsForm] = useState(false)
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
-  const [mobileTipsOpen, setMobileTipsOpen] = useState(false)
+  const [mobileQrOpen, setMobileQrOpen] = useState(false)
   const [tipOnlySupportersOpen, setTipOnlySupportersOpen] = useState(false)
   const [eventTipSupportersOpen, setEventTipSupportersOpen] = useState(false)
   const [newEvent, setNewEvent] = useState<EventRequest>({
@@ -790,7 +790,7 @@ export default function DjDashboardPage() {
               type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full gap-2"
+                    className="min-h-[46px] w-full gap-2 border-blue-400/40 bg-blue-500/15 text-blue-100 hover:bg-blue-500/25"
                     onClick={async () => {
                       const url = `${window.location.origin}/tip/${tipSettings.tipLinkToken}`
                       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(url)}`
@@ -814,14 +814,14 @@ export default function DjDashboardPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full gap-2"
+                    className="min-h-[46px] w-full gap-2 border-green-400/40 bg-green-500/15 text-green-100 hover:bg-green-500/25"
                     onClick={() => {
                       setTipOnlySupportersOpen(true)
                       setMobileMenuOpen(false)
                     }}
                   >
                     <Users className="w-4 h-4" />
-                    View tip-only supporters
+                    Tip-only tips
                   </Button>
                   {showTipSettingsForm ? (
                     <div className="space-y-2 pt-2 border-t border-white/10">
@@ -1385,61 +1385,14 @@ export default function DjDashboardPage() {
 
           {/* Event Details & Requests */}
           <div className={`${desktopEventsCollapsed ? 'md:col-span-3' : 'md:col-span-2'} min-w-0`}>
-            {/* Mobile-only: compact revenue strip + collapsible Tip-only tips (hidden from tablet up when sidebar is visible) */}
-            <div className="md:hidden mb-4">
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <GlassCard noEnterAnimation glow="green" className="p-3">
-                  <p className="text-xs text-gray-400">Revenue</p>
-                  <p className="text-base font-bold text-green-400">
-                    {(revenueSummary ? Number(revenueSummary.totalRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
-                  </p>
-                </GlassCard>
-                <GlassCard noEnterAnimation glow="green" className="p-3">
-                  <p className="text-xs text-gray-400">Tip-only</p>
-                  <p className="text-base font-bold text-green-400">{revenueSummary?.tipRecordCount ?? standaloneTips?.length ?? 0}</p>
-                </GlassCard>
-              </div>
-              <GlassCard noEnterAnimation glow="green" className="overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setMobileTipsOpen((o) => !o)}
-                  className="w-full flex items-center justify-between gap-2 py-2 text-left hover:bg-white/5 rounded-lg min-h-[44px] touch-manipulation"
-                  aria-expanded={mobileTipsOpen}
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium text-gray-200">
-                    <Banknote className="w-4 h-4 text-green-400" />
-                    Tip-only tips {standaloneTips && standaloneTips.length > 0 && (
-                      <span className="text-green-400">({standaloneTips.length})</span>
-                    )}
-                  </span>
-                  {mobileTipsOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                </button>
-                {mobileTipsOpen && (
-                  <div className="pt-2 border-t border-white/10 space-y-2 max-h-48 overflow-y-auto">
-                    {standaloneTips && standaloneTips.length > 0 ? (
-                      <TipOnlySupportersList tips={standaloneTips} limit={10} />
-                ) : (
-                      <p className="text-gray-400 text-center py-2 text-sm">No tip-only tips yet</p>
-                    )}
-                    {standaloneTips && standaloneTips.length > 10 && (
-                      <Button type="button" variant="ghost" size="sm" className="w-full gap-2 text-green-300" onClick={() => setTipOnlySupportersOpen(true)}>
-                        <Users className="h-4 w-4" />
-                        View all {standaloneTips.length}
-                      </Button>
-                )}
-              </div>
-                )}
-            </GlassCard>
-          </div>
-
             {selectedEvent ? (
               <div className="space-y-4">
-                {/* 1. Event details & QR (back in place) */}
-                <GlassCard noEnterAnimation glow="blue">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                {/* 1. Event details & focused mobile controls */}
+                <GlassCard noEnterAnimation glow="blue" className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h2 className="text-xl sm:text-2xl font-bold">{selectedEvent.name}</h2>
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h2 className="min-w-0 flex-1 text-xl sm:text-2xl font-bold leading-tight">{selectedEvent.name}</h2>
                         {selectedEvent.status === EventStatus.ENDED && (
                           <span className="px-3 py-1 rounded-full bg-gray-500/20 text-gray-400 text-sm">
                             Ended
@@ -1459,27 +1412,25 @@ export default function DjDashboardPage() {
                         )}
                       </div>
                       {selectedEvent.description && (
-                        <p className="text-gray-300 mb-2 text-sm sm:text-base">{selectedEvent.description}</p>
+                        <p className="text-gray-300 mb-2 line-clamp-2 text-sm sm:text-base">{selectedEvent.description}</p>
                       )}
                       <p className="text-xs sm:text-sm text-gray-400">
                         Starts: {formatInRwanda(selectedEvent.startTime)}
                       </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 gap-2 border-green-400/30 text-green-200 hover:bg-green-400/10"
-                        onClick={() => setEventTipSupportersOpen(true)}
-                      >
-                        <Users className="h-4 w-4" />
-                        View event tippers
-                        <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-semibold text-green-100">
-                          {eventTipRecords?.length ?? 0}
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded-full border border-yellow-400/25 bg-yellow-500/10 px-2.5 py-1 font-medium text-yellow-200">
+                          {requests?.filter(r => r.status === RequestStatus.PENDING).length ?? 0} pending
                         </span>
-                      </Button>
+                        <span className="rounded-full border border-green-400/25 bg-green-500/10 px-2.5 py-1 font-medium text-green-200">
+                          {requests?.filter(r => r.status === RequestStatus.ACCEPTED).length ?? 0} accepted
+                        </span>
+                        <span className="rounded-full border border-blue-400/25 bg-blue-500/10 px-2.5 py-1 font-medium text-blue-200">
+                          {requests?.filter(r => r.status === RequestStatus.PLAYED).length ?? 0} played
+                        </span>
+                      </div>
                     </div>
                     {qrCodeUrl && (
-                      <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
+                      <div className="hidden flex-col items-start gap-2 sm:flex sm:items-end sm:flex-shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={qrCodeUrl} alt="Event QR Code" className="w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-white" />
                         <QRDownload
@@ -1491,10 +1442,68 @@ export default function DjDashboardPage() {
                       </div>
                     )}
                   </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 md:hidden">
+                    <GlowButton noMotion
+                      type="button"
+                      onClick={() => setFullScreenRequests(true)}
+                      glowColor="purple"
+                      size="sm"
+                      className="min-h-[56px] flex-col gap-1 rounded-xl text-xs font-semibold leading-tight"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                      Focus queue
+                    </GlowButton>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMobileQrOpen((o) => !o)}
+                      className="min-h-[56px] flex-col gap-1 rounded-xl border-blue-400/40 bg-blue-500/15 text-xs font-semibold leading-tight text-blue-100 hover:bg-blue-500/25"
+                    >
+                      <QrCode className="h-4 w-4" />
+                      QR code
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-[56px] flex-col gap-1 rounded-xl border-green-400/40 bg-green-500/15 text-xs font-semibold leading-tight text-green-100 hover:bg-green-500/25"
+                      onClick={() => setEventTipSupportersOpen(true)}
+                    >
+                      <Users className="h-4 w-4" />
+                      Event tippers
+                      <span className="text-[11px] font-medium text-green-200/80">{eventTipRecords?.length ?? 0}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTipOnlySupportersOpen(true)}
+                      className="min-h-[56px] flex-col gap-1 rounded-xl border-emerald-400/40 bg-emerald-500/15 text-xs font-semibold leading-tight text-emerald-100 hover:bg-emerald-500/25"
+                    >
+                      <Banknote className="h-4 w-4" />
+                      Tip-only
+                      <span className="text-[11px] font-medium text-emerald-200/80">{standaloneTips?.length ?? 0}</span>
+                    </Button>
+                  </div>
+                  {mobileQrOpen && qrCodeUrl && (
+                    <div className="mt-4 rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 md:hidden">
+                      <div className="flex items-center gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={qrCodeUrl} alt="Event QR Code" className="h-24 w-24 rounded-lg bg-white" />
+                        <QRDownload
+                          qrDataUrl={qrCodeUrl}
+                          filenameBase={`${sanitizeEventNameForFile(selectedEvent.name)}-qr-code`}
+                          pdfTitle="Event QR Code"
+                          pdfSubtitle={selectedEvent.name}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </GlassCard>
 
                 {/* 2. Song Requests — primary focus */}
-                <GlassCard noEnterAnimation glow="pink" className={!fullScreenRequests ? 'sticky top-4 z-10' : ''}>
+                <GlassCard noEnterAnimation glow="pink" className={!fullScreenRequests ? 'md:sticky md:top-4 md:z-10 p-4 sm:p-6' : 'p-4 sm:p-6'}>
                   <div className="flex flex-col gap-4 mb-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h3 className="text-xl font-bold">Song Requests</h3>

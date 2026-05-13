@@ -10,7 +10,7 @@ import { GlassCard } from '@/components/GlassCard'
 import { GlowButton } from '@/components/GlowButton'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Music, Send, CheckCircle2, Sparkles, Clock, Home, Banknote, Smartphone, User, ExternalLink, Globe, Link2 } from 'lucide-react'
+import { Music, Send, CheckCircle2, Sparkles, Clock, Home, Banknote, Smartphone, User, ExternalLink, Globe, Link2, Headphones, Heart, Radio } from 'lucide-react'
 import { SiInstagram, SiMixcloud } from 'react-icons/si'
 import type { Event, PublicSongRequestCreateRequest, MusicSearchResult, ProfileLinkResponse } from '@/lib/types'
 import { EventStatus, TipPaymentType, ProfileLinkType } from '@/lib/types'
@@ -259,28 +259,30 @@ export default function PublicEventPage() {
     <div className="min-h-screen relative overflow-x-hidden">
       <AnimatedBackground />
       
-      <div className="relative z-10 container mx-auto px-6 py-12">
+      <div className="relative z-10 container mx-auto px-4 py-6 sm:px-6 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-3xl mx-auto space-y-8"
+          className="mx-auto max-w-3xl space-y-5 sm:space-y-8"
         >
           {/* Event Header */}
-          <GlassCard glow="purple" className="text-center">
+          <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(20,24,33,0.92),rgba(66,25,88,0.72)_52%,rgba(10,14,22,0.95))] p-5 text-center shadow-2xl sm:p-8">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-pink-300/70 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-cyan-400/10 to-transparent" />
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              className="inline-block mb-4"
+              className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-pink-300/30 bg-white/10 shadow-lg shadow-pink-500/20"
             >
-              <Music className="w-16 h-16 text-purple-400 mx-auto" />
+              <Headphones className="h-9 w-9 text-pink-200" />
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl lg:text-5xl font-bold mb-4 text-gradient"
+              className="mx-auto mb-3 max-w-2xl text-3xl font-black leading-tight text-white sm:text-5xl"
             >
               {event.name}
             </motion.h1>
@@ -289,7 +291,7 @@ export default function PublicEventPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-gray-300 text-lg mb-4"
+                className="mx-auto mb-4 max-w-xl text-sm leading-relaxed text-gray-200 sm:text-lg"
               >
                 {event.description}
               </motion.p>
@@ -298,15 +300,15 @@ export default function PublicEventPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="flex items-center justify-center gap-2 text-sm text-gray-400"
+              className="mx-auto inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-black/20 px-3 py-2 text-xs text-gray-300 sm:text-sm"
             >
-              <Clock className="w-4 h-4" />
-              <span>
+              <Clock className="h-4 w-4 shrink-0 text-cyan-300" />
+              <span className="truncate">
                 {formatInRwanda(event.startTime)} -{' '}
                 {formatInRwanda(event.endTime)}
               </span>
             </motion.div>
-          </GlassCard>
+          </section>
 
           {/* DJ info & socials */}
           {event.createdBy && (
@@ -314,18 +316,17 @@ export default function PublicEventPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45 }}
-              className="flex flex-col items-center gap-3 text-center"
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center shadow-xl shadow-black/20"
             >
               <div className="flex flex-col items-center gap-1">
-                <p className="text-xs uppercase tracking-wider text-gray-500 font-medium">Your host</p>
-                <p className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 shrink-0" aria-hidden />
+                <p className="text-xs font-medium uppercase tracking-wide text-cyan-300">Live with</p>
+                <p className="flex items-center gap-2 text-xl font-bold text-white sm:text-2xl">
+                  <User className="h-5 w-5 shrink-0 text-pink-300 sm:h-6 sm:w-6" aria-hidden />
                   {event.createdBy.name}
                 </p>
               </div>
               {event.createdBy.profileLinks && event.createdBy.profileLinks.length > 0 && (
-                <div className="flex flex-col items-center gap-2 w-full max-w-md">
-                  <p className="text-xs text-gray-500 font-medium">Their socials</p>
+                <div className="mt-3 flex w-full flex-col items-center gap-2">
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {event.createdBy.profileLinks.map((link: ProfileLinkResponse) => {
                       const label = link.linkType === ProfileLinkType.CUSTOM && link.label ? link.label : link.linkType.charAt(0) + link.linkType.slice(1).toLowerCase()
@@ -340,11 +341,11 @@ export default function PublicEventPage() {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-purple-500/30 border border-white/20 hover:border-purple-500/50 px-4 py-2.5 text-sm font-medium text-gray-200 hover:text-white transition-colors"
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-medium text-gray-200 transition-colors hover:border-pink-400/50 hover:bg-pink-500/20 hover:text-white"
                         >
-                          <Icon className="w-4 h-4 shrink-0 text-purple-400" aria-hidden />
+                          <Icon className="h-4 w-4 shrink-0 text-pink-300" aria-hidden />
                           <span>{label}</span>
-                          <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" aria-hidden />
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
                         </a>
                       )
                     })}
@@ -368,33 +369,38 @@ export default function PublicEventPage() {
 
           {/* Choice: Tip only vs Request a song */}
           {actionMode === 'choose' && (
-            <GlassCard glow="pink">
+            <GlassCard glow="pink" className="p-4 sm:p-6">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-4"
               >
-                <h2 className="text-xl font-bold text-center mb-4">What would you like to do?</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <GlowButton
-                    type="button"
-                    onClick={() => setActionMode('tip_only')}
-                    glowColor="green"
-                    className="w-full py-6 flex flex-col items-center gap-2"
-                    disabled={isEventBlocked}
-                  >
-                    <Banknote className="w-8 h-8" />
-                    <span>Tip only</span>
-                  </GlowButton>
+                <div className="text-center">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-pink-300">Send your energy to the booth</p>
+                  <h2 className="mt-1 text-2xl font-black text-white">What are we playing next?</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                   <GlowButton
                     type="button"
                     onClick={() => setActionMode('request_song')}
                     glowColor="pink"
-                    className="w-full py-6 flex flex-col items-center gap-2"
+                    className="min-h-[112px] w-full flex-col items-center gap-2 rounded-xl py-6 text-base"
                     disabled={isEventBlocked}
                   >
-                    <Music className="w-8 h-8" />
+                    <Radio className="h-9 w-9" />
                     <span>Request a song</span>
+                    <span className="text-xs font-normal text-white/70">Search, send, and let the DJ review it</span>
+                  </GlowButton>
+                  <GlowButton
+                    type="button"
+                    onClick={() => setActionMode('tip_only')}
+                    glowColor="green"
+                    className="min-h-[104px] w-full flex-col items-center gap-2 rounded-xl border border-green-300/40 bg-green-600/90 py-5 text-base text-white shadow-lg shadow-green-500/25 hover:bg-green-500"
+                    disabled={isEventBlocked}
+                  >
+                    <Heart className="h-8 w-8" />
+                    <span>Tip the DJ</span>
+                    <span className="text-xs font-normal text-white/75">Support the set without requesting</span>
                   </GlowButton>
                 </div>
               </motion.div>
@@ -403,10 +409,10 @@ export default function PublicEventPage() {
 
           {/* Tip only form (no song request) */}
           {actionMode === 'tip_only' && !confirmationType && event && (
-            <GlassCard glow="green">
+            <GlassCard glow="green" className="p-4 sm:p-6">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <h2 className="flex items-center gap-2 text-2xl font-bold">
                     <Banknote className="w-6 h-6 text-green-400" />
                     Tip the DJ
                   </h2>
@@ -419,9 +425,9 @@ export default function PublicEventPage() {
                       setIsTriggeringPayment(false)
                       setThankYou(false)
                     }}
-                    className="text-sm text-gray-400 hover:text-gray-300 underline"
+                    className="min-h-[44px] shrink-0 rounded-lg px-2 text-sm text-gray-400 underline hover:text-gray-300"
                   >
-                    Back to choices
+                    Back
                   </button>
                 </div>
                 {actionError && (
@@ -619,17 +625,20 @@ export default function PublicEventPage() {
 
           {/* Request Form (song request + optional tip) */}
           {actionMode === 'request_song' && !confirmationType && (
-          <GlassCard glow="pink">
+          <GlassCard glow="pink" className="p-4 sm:p-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-pink-400" />
-                Request a Song
-              </h2>
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-pink-300">Queue drop</p>
+                    <h2 className="mt-1 flex items-center gap-2 text-2xl font-black text-white">
+                      <Sparkles className="h-6 w-6 text-pink-300" />
+                      Request a Song
+                    </h2>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
@@ -639,9 +648,9 @@ export default function PublicEventPage() {
                       setSuccess(false)
                       setThankYou(false)
                     }}
-                    className="text-sm text-gray-400 hover:text-gray-300 underline"
+                    className="min-h-[44px] shrink-0 rounded-lg px-2 text-sm text-gray-400 underline hover:text-gray-300"
                   >
-                    Back to choices
+                    Back
                   </button>
                 </div>
                 {actionError && (
@@ -654,8 +663,10 @@ export default function PublicEventPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 }}
+                  className="rounded-xl border border-pink-300/20 bg-pink-500/10 p-3"
                 >
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                    <Music className="h-4 w-4 text-pink-300" />
                     Search for a Song *
                   </label>
                   <MusicSearchInput
@@ -663,7 +674,7 @@ export default function PublicEventPage() {
                     selectedResult={selectedSong}
                     placeholder="Type song name or artist..."
                   />
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="mt-2 text-xs text-gray-400">
                       If you don&apos;t find your song in search, fill in the title and artist manually below.
                     </p>
                 </motion.div>
@@ -673,7 +684,7 @@ export default function PublicEventPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.75 }}
-                  className="space-y-3 pt-2 border-t border-white/10"
+                  className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
                 >
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Song Title</label>
@@ -732,35 +743,37 @@ export default function PublicEventPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.05 }}
-                    className="space-y-3 pt-2 border-t border-white/10"
+                  className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
                   >
-                    <p className="block text-sm font-medium text-gray-300 mb-2">
-                      Would you like to tip the DJ?
+                    <p className="block text-sm font-semibold text-white">
+                      Add a tip?
                     </p>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className={`flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${formData.wantToTip ? 'border-green-400/50 bg-green-500/15 text-green-100' : 'border-white/10 bg-white/5 text-gray-300'}`}>
                         <input
                           type="radio"
                           name="wantToTip"
                           checked={formData.wantToTip === true}
                           onChange={() => setFormData({ ...formData, wantToTip: true })}
-                          className="rounded-full border-white/30 bg-white/5"
+                          className="sr-only"
                         />
-                        <span className="text-gray-300">Yes</span>
+                        <Banknote className="h-4 w-4" />
+                        <span>Yes</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className={`flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ${!formData.wantToTip ? 'border-pink-400/50 bg-pink-500/15 text-pink-100' : 'border-white/10 bg-white/5 text-gray-300'}`}>
                         <input
                           type="radio"
                           name="wantToTip"
                           checked={formData.wantToTip === false}
                           onChange={() => setFormData({ ...formData, wantToTip: false, tipAmount: '', payerName: '', payerPhone: '' })}
-                          className="rounded-full border-white/30 bg-white/5"
+                          className="sr-only"
                         />
-                        <span className="text-gray-300">No</span>
+                        <Music className="h-4 w-4" />
+                        <span>Request only</span>
                       </label>
                     </div>
                     {formData.wantToTip && (
-                      <div className="space-y-3 pl-2 border-l-2 border-pink-500/50">
+                      <div className="space-y-3 rounded-xl border border-green-400/20 bg-green-500/10 p-3">
                         {paymentValue && (
                           <div className="rounded-lg bg-white/10 border border-pink-500/30 p-4">
                             <p className="text-sm font-medium text-gray-300 mb-1">Payment</p>
@@ -834,7 +847,7 @@ export default function PublicEventPage() {
                   <GlowButton
                     type="submit"
                     glowColor="pink"
-                    className="w-full min-h-[48px]"
+                    className="w-full min-h-[52px] rounded-xl"
                     disabled={createMutation.isPending || isEventBlocked}
                   >
                     {createMutation.isPending ? (
@@ -843,7 +856,10 @@ export default function PublicEventPage() {
                         {formData.wantToTip && formData.tipAmount ? 'Submitting & Preparing Payment...' : 'Submitting...'}
                       </span>
                     ) : (
-                      formData.wantToTip && formData.tipAmount ? 'Submit & Pay' : 'Submit Request'
+                      <span className="flex items-center gap-2">
+                        <Send className="h-4 w-4" />
+                        {formData.wantToTip && formData.tipAmount ? 'Submit & Pay' : 'Submit Request'}
+                      </span>
                     )}
                   </GlowButton>
               </form>
