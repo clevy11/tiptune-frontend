@@ -1017,6 +1017,7 @@ export default function DjDashboardPage() {
             >
                 <GlassCard
                   noEnterAnimation
+                  noHoverAnimation
                   glow={createEventError ? 'red' : 'purple'}
                   className={`p-8 ${createEventError ? 'ring-2 ring-red-500/50' : ''}`}
                 >
@@ -1184,7 +1185,7 @@ export default function DjDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {/* Events List — hidden on mobile (use drawer); visible from tablet (md) */}
           <div className={`${desktopEventsCollapsed ? 'hidden' : 'hidden md:block'} md:col-span-1 min-w-0`}>
-            <GlassCard noEnterAnimation glow="purple">
+            <GlassCard noEnterAnimation noHoverAnimation glow="purple">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Music className="w-5 h-5 text-purple-400" />
                 My Events
@@ -1211,7 +1212,7 @@ export default function DjDashboardPage() {
             </GlassCard>
 
             {/* Permanent tip link */}
-            <GlassCard noEnterAnimation glow="green" className="mt-4">
+            <GlassCard noEnterAnimation noHoverAnimation glow="green" className="mt-4">
               <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-green-400" />
                 Permanent tip link
@@ -1348,20 +1349,20 @@ export default function DjDashboardPage() {
 
             {/* Total revenue & Tip records count */}
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <GlassCard noEnterAnimation glow="green" className="p-3">
+              <GlassCard noEnterAnimation noHoverAnimation glow="green" className="p-3">
                 <p className="text-xs text-gray-400 mb-1">Total revenue</p>
                 <p className="text-lg font-bold text-green-400">
                   {(revenueSummary ? Number(revenueSummary.totalRevenue) : 0).toLocaleString()} <span className="text-xs font-normal text-gray-400">RWF</span>
                 </p>
               </GlassCard>
-              <GlassCard noEnterAnimation glow="green" className="p-3">
+              <GlassCard noEnterAnimation noHoverAnimation glow="green" className="p-3">
                 <p className="text-xs text-gray-400 mb-1">Tip-only records</p>
                 <p className="text-lg font-bold text-green-400">{revenueSummary?.tipRecordCount ?? standaloneTips?.length ?? 0}</p>
               </GlassCard>
             </div>
 
             {/* Tip-only tips (standalone, not from events) */}
-            <GlassCard noEnterAnimation glow="green" className="mt-4">
+            <GlassCard noEnterAnimation noHoverAnimation glow="green" className="mt-4">
               <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
                 <Banknote className="w-5 h-5 text-green-400" />
                 Tip-only tips
@@ -1388,7 +1389,7 @@ export default function DjDashboardPage() {
             {selectedEvent ? (
               <div className="space-y-4">
                 {/* 1. Event details & focused mobile controls */}
-                <GlassCard noEnterAnimation glow="blue" className="p-4 sm:p-6">
+                <GlassCard noEnterAnimation noHoverAnimation glow="blue" className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -1503,7 +1504,7 @@ export default function DjDashboardPage() {
                 </GlassCard>
 
                 {/* 2. Song Requests — primary focus */}
-                <GlassCard noEnterAnimation glow="pink" className={!fullScreenRequests ? 'md:sticky md:top-4 md:z-10 p-4 sm:p-6' : 'p-4 sm:p-6'}>
+                <GlassCard noEnterAnimation noHoverAnimation glow="pink" className={!fullScreenRequests ? 'md:sticky md:top-4 md:z-10 p-4 sm:p-6' : 'p-4 sm:p-6'}>
                   <div className="flex flex-col gap-4 mb-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h3 className="text-xl font-bold">Song Requests</h3>
@@ -1707,7 +1708,7 @@ export default function DjDashboardPage() {
                 </div>
 
                 {/* More: Revenue report + Help (single collapsible) */}
-                <GlassCard glow="purple" className="overflow-hidden">
+                <GlassCard glow="purple" noHoverAnimation className="overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setAnalyticsOpen((o) => !o)}
@@ -1775,7 +1776,7 @@ export default function DjDashboardPage() {
                 </GlassCard>
               </div>
             ) : (
-              <GlassCard glow="purple" className="text-center py-12">
+              <GlassCard glow="purple" noHoverAnimation className="text-center py-12">
                 <Music className="w-16 h-16 mx-auto mb-4 text-purple-400" />
                 <p className="text-gray-400 mb-2">Select an event to manage song requests</p>
                 <p className="text-sm text-gray-500">Use the menu on the left (desktop) or tap the menu icon (mobile)</p>

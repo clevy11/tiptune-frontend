@@ -11,15 +11,17 @@ interface GlassCardProps {
   glow?: 'purple' | 'blue' | 'pink' | 'red' | 'green' | 'yellow' | 'none'
   /** Skip entrance animation; use plain div with subtle hover overlay (for dashboards). */
   noEnterAnimation?: boolean
+  /** Skip hover animation for better scroll performance (for dashboards with many cards). */
+  noHoverAnimation?: boolean
 }
 
-export function GlassCard({ children, className, hover = true, glow = 'purple', noEnterAnimation = false }: GlassCardProps) {
+export function GlassCard({ children, className, hover = true, glow = 'purple', noEnterAnimation = false, noHoverAnimation = false }: GlassCardProps) {
   const glowClass = glow !== 'none' ? `glow-${glow}` : ''
   const baseClass = cn('glass rounded-2xl p-6 shadow-2xl', glowClass, className)
 
   if (noEnterAnimation) {
     return (
-      <div className={cn(baseClass, 'transition-colors', hover && 'hover:bg-white/5')}>
+      <div className={cn(baseClass, 'transition-colors', hover && !noHoverAnimation && 'hover:bg-white/5')}>
         {children}
       </div>
     )
@@ -31,7 +33,7 @@ export function GlassCard({ children, className, hover = true, glow = 'purple', 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      whileHover={hover ? {
+      whileHover={hover && !noHoverAnimation ? {
         scale: 1.02,
         transition: { duration: 0.2 }
       } : {}}

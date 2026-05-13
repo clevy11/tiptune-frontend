@@ -104,7 +104,7 @@ export default function UserDashboardPage() {
 
         {/* My Requests Section */}
         {myRequests && myRequests.length > 0 && (
-          <GlassCard noEnterAnimation glow="purple" className="mb-8">
+          <GlassCard noEnterAnimation noHoverAnimation glow="purple" className="mb-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gradient">
               <ListMusic className="w-6 h-6" />
               My Requests
@@ -145,7 +145,7 @@ export default function UserDashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
               <div key={event.accessToken}>
-                <GlassCard noEnterAnimation glow="pink" className="h-full flex flex-col">
+                <GlassCard noEnterAnimation noHoverAnimation glow="pink" className="h-full flex flex-col">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-4">
                       <Music className="w-12 h-12 text-pink-400 mb-2" />
@@ -191,7 +191,7 @@ export default function UserDashboardPage() {
             ))}
           </div>
         ) : (
-          <GlassCard noEnterAnimation glow="purple" className="text-center py-20">
+          <GlassCard noEnterAnimation noHoverAnimation glow="purple" className="text-center py-20">
             <Music className="w-20 h-20 mx-auto text-purple-400 mb-4" />
             <h2 className="text-2xl font-bold mb-2">No Events Available</h2>
             <p className="text-gray-400">
