@@ -61,7 +61,7 @@ export function AuthSplitLayout({
               <div
                 key={s.id}
                 className={[
-                  'absolute inset-0 bg-cover bg-center transition-opacity duration-[1800ms] ease-out',
+                  'absolute inset-0 bg-cover bg-center transition-opacity [transition-duration:1800ms] ease-out',
                   active === s.id ? 'opacity-100' : 'opacity-0',
                 ].join(' ')}
                 style={{ backgroundImage: s.bg }}

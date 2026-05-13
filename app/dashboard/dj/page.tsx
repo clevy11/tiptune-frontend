@@ -1614,7 +1614,7 @@ export default function DjDashboardPage() {
                                 <div className="px-4 py-3">
                                   <RequestShoutout request={request} />
                                   {request.message && (
-                                    <p className="text-sm text-gray-400 mt-2 italic">"{request.message}"</p>
+                                    <p className="text-sm text-gray-400 mt-2 italic">&quot;{request.message}&quot;</p>
                                   )}
                                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                                     {request.requesterName && (
@@ -1968,7 +1968,7 @@ export default function DjDashboardPage() {
                         <div className="px-4 py-3">
                           <RequestShoutout request={request} compact />
                           {request.message && (
-                            <p className="text-sm text-gray-400 mt-2 italic">"{request.message}"</p>
+                            <p className="text-sm text-gray-400 mt-2 italic">&quot;{request.message}&quot;</p>
                           )}
                           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                             {request.requesterName && (
