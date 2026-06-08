@@ -30,16 +30,16 @@ import { QRDownload } from '@/components/export/QRDownload'
 import { sanitizeEventNameForFile, formatInRwanda } from '@/lib/utils'
 
 // Memoized EventCard to prevent unnecessary re-renders
-const EventCard = memo(({ 
-  event, 
-  isSelected, 
-  onSelect, 
-  onEdit, 
-  onDelete, 
+const EventCard = memo(({
+  event,
+  isSelected,
+  onSelect,
+  onEdit,
+  onDelete,
   onEnd,
   isDeleting,
   isEnding
-}: { 
+}: {
   event: DjEvent
   isSelected: boolean
   onSelect: () => void
@@ -58,7 +58,7 @@ const EventCard = memo(({
   >
     <div className="flex items-start justify-between gap-2 mb-2">
       <div className="flex-1">
-        <h3 
+        <h3
           className="font-semibold cursor-pointer flex items-center gap-2"
           onClick={onSelect}
         >
@@ -103,7 +103,7 @@ const EventCard = memo(({
         </button>
       </div>
     </div>
-    <div 
+    <div
       className="flex items-center justify-between text-sm text-gray-400 cursor-pointer"
       onClick={onSelect}
     >
@@ -119,17 +119,17 @@ const EventCard = memo(({
 EventCard.displayName = 'EventCard'
 
 // Memoized MobileEventItem to prevent unnecessary re-renders
-const MobileEventItem = memo(({ 
-  event, 
-  isSelected, 
-  onSelect, 
-  onEdit, 
-  onDelete, 
+const MobileEventItem = memo(({
+  event,
+  isSelected,
+  onSelect,
+  onEdit,
+  onDelete,
   onEnd,
   isDeleting,
   isEnding,
   onCloseMenu
-}: { 
+}: {
   event: DjEvent
   isSelected: boolean
   onSelect: () => void
@@ -141,9 +141,8 @@ const MobileEventItem = memo(({
   onCloseMenu: () => void
 }) => (
   <div
-    className={`w-full rounded-lg p-4 transition-all min-h-[44px] touch-manipulation ${
-      isSelected ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-white/5 border border-white/10'
-    } ${event.status === EventStatus.ENDED ? 'opacity-75' : ''}`}
+    className={`w-full rounded-lg p-4 transition-all min-h-[44px] touch-manipulation ${isSelected ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-white/5 border border-white/10'
+      } ${event.status === EventStatus.ENDED ? 'opacity-75' : ''}`}
   >
     <div className="flex items-start justify-between gap-2 mb-2">
       <button
@@ -238,7 +237,7 @@ function RequestShoutout({ request, compact = false }: { request: DjSongRequest;
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <User className="h-4 w-4 shrink-0 text-green-300" />
-          <span className="text-xs font-semibold uppercase tracking-wide text-green-300">{shoutoutName ? 'Tipper' : 'Tipped'}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-green-300">{shoutoutName ? 'Requester' : 'Tipped'}</span>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full border border-green-400/40 bg-green-500/20 px-2.5 py-1 text-xs font-bold text-green-200">
           <Banknote className="h-3.5 w-3.5" />
@@ -828,7 +827,7 @@ export default function DjDashboardPage() {
                     height={200}
                   />
                   <Button
-              type="button"
+                    type="button"
                     variant="outline"
                     size="sm"
                     className="min-h-[46px] w-full gap-2 border-blue-400/40 bg-blue-500/15 text-blue-100 hover:bg-blue-500/25"
@@ -940,7 +939,7 @@ export default function DjDashboardPage() {
                 size="sm"
                 className="w-full"
                 disabled={updateTipSettingsMutation.isPending || !tipSettingsForm.paymentValue.trim()}
-              onClick={() => {
+                onClick={() => {
                   updateTipSettingsMutation.mutate({
                     tipPaymentType: tipSettingsForm.tipPaymentType,
                     paymentValue: tipSettingsForm.paymentValue.trim(),
@@ -963,7 +962,7 @@ export default function DjDashboardPage() {
           </Link>
         </div>
       </MobileDrawer>
-      
+
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-[100vw] overflow-x-hidden">
         {/* Header — mobile: hamburger + stacked; desktop: row */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
@@ -980,7 +979,7 @@ export default function DjDashboardPage() {
               <p className="text-xs uppercase tracking-wider text-gray-500 font-medium pl-10 sm:pl-0">
                 DJ Control Panel
               </p>
-            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <Music className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400 shrink-0" aria-hidden />
                 {currentUser?.name ? (
                   <Link
@@ -1055,259 +1054,257 @@ export default function DjDashboardPage() {
 
         {/* Create/Edit Event Modal */}
         {(showCreateEvent || editingEventId !== null) && (
-            <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => {
-                setShowCreateEvent(false)
-                setEditingEventId(null)
-                setCreateEventError(null)
-              }}
-            >
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setShowCreateEvent(false)
+              setEditingEventId(null)
+              setCreateEventError(null)
+            }}
+          >
             <div
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-2xl"
             >
-                <GlassCard
-                  noEnterAnimation
-                  noHoverAnimation
-                  glow={createEventError ? 'red' : 'purple'}
-                  className={`p-8 ${createEventError ? 'ring-2 ring-red-500/50' : ''}`}
-                >
-                  <h2 className="text-2xl font-bold mb-6 text-gradient">
-                    {editingEventId ? 'Edit Event' : 'Create New Event'}
-                  </h2>
-                  <form onSubmit={editingEventId ? handleUpdateEvent : handleCreateEvent} className="space-y-4">
-                    {createEventError && (
-                      <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4">
-                        <ErrorMessage message={createEventError} />
-                      </div>
-                    )}
+              <GlassCard
+                noEnterAnimation
+                noHoverAnimation
+                glow={createEventError ? 'red' : 'purple'}
+                className={`p-8 ${createEventError ? 'ring-2 ring-red-500/50' : ''}`}
+              >
+                <h2 className="text-2xl font-bold mb-6 text-gradient">
+                  {editingEventId ? 'Edit Event' : 'Create New Event'}
+                </h2>
+                <form onSubmit={editingEventId ? handleUpdateEvent : handleCreateEvent} className="space-y-4">
+                  {createEventError && (
+                    <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4">
+                      <ErrorMessage message={createEventError} />
+                    </div>
+                  )}
+                  <Input
+                    placeholder="Event Name *"
+                    value={newEvent.name}
+                    onChange={(e) => {
+                      setNewEvent({ ...newEvent, name: e.target.value })
+                      setCreateEventError(null)
+                    }}
+                    required
+                  />
+                  <Textarea
+                    placeholder="Description"
+                    value={newEvent.description}
+                    onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                    rows={3}
+                  />
+                  <div>
+                    <p className="block text-sm font-medium text-gray-300 mb-2">
+                      Do you want to use Momo or Phone Number? *
+                    </p>
+                    <div className="flex gap-4 mb-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="tipPaymentType"
+                          checked={newEvent.tipPaymentType === TipPaymentType.MOMO_CODE}
+                          onChange={() =>
+                            setNewEvent({
+                              ...newEvent,
+                              tipPaymentType: TipPaymentType.MOMO_CODE,
+                              momoCode: newEvent.momoCode.slice(0, 10),
+                            })
+                          }
+                          className="rounded-full border-white/30 bg-white/5"
+                        />
+                        <span className="text-gray-300">MoMo</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="tipPaymentType"
+                          checked={newEvent.tipPaymentType === TipPaymentType.PHONE_NUMBER}
+                          onChange={() =>
+                            setNewEvent({
+                              ...newEvent,
+                              tipPaymentType: TipPaymentType.PHONE_NUMBER,
+                            })
+                          }
+                          className="rounded-full border-white/30 bg-white/5"
+                        />
+                        <span className="text-gray-300">Phone Number</span>
+                      </label>
+                    </div>
+                    <label htmlFor="momoCode" className="block text-sm font-medium text-gray-300 mb-1">
+                      {newEvent.tipPaymentType === TipPaymentType.MOMO_CODE
+                        ? 'MoMo short code (4–10 digits) *'
+                        : 'Phone number (9–15 digits) *'}
+                    </label>
                     <Input
-                      placeholder="Event Name *"
-                      value={newEvent.name}
+                      id="momoCode"
+                      placeholder={
+                        newEvent.tipPaymentType === TipPaymentType.MOMO_CODE
+                          ? 'e.g. 2345'
+                          : 'e.g. 0781234567'
+                      }
+                      value={newEvent.momoCode}
                       onChange={(e) => {
-                        setNewEvent({ ...newEvent, name: e.target.value })
+                        const max = newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15
+                        const v = e.target.value.replace(/\D/g, '').slice(0, max)
+                        setNewEvent({ ...newEvent, momoCode: v })
                         setCreateEventError(null)
                       }}
-                      required
+                      maxLength={newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15}
+                      className="w-full font-mono"
                     />
-                    <Textarea
-                      placeholder="Description"
-                      value={newEvent.description}
-                      onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                      rows={3}
-                    />
-                    <div>
-                      <p className="block text-sm font-medium text-gray-300 mb-2">
-                        Do you want to use Momo or Phone Number? *
-                      </p>
-                      <div className="flex gap-4 mb-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="tipPaymentType"
-                            checked={newEvent.tipPaymentType === TipPaymentType.MOMO_CODE}
-                            onChange={() =>
-                              setNewEvent({
-                                ...newEvent,
-                                tipPaymentType: TipPaymentType.MOMO_CODE,
-                                momoCode: newEvent.momoCode.slice(0, 10),
-                              })
-                            }
-                            className="rounded-full border-white/30 bg-white/5"
-                          />
-                          <span className="text-gray-300">MoMo</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="tipPaymentType"
-                            checked={newEvent.tipPaymentType === TipPaymentType.PHONE_NUMBER}
-                            onChange={() =>
-                              setNewEvent({
-                                ...newEvent,
-                                tipPaymentType: TipPaymentType.PHONE_NUMBER,
-                              })
-                            }
-                            className="rounded-full border-white/30 bg-white/5"
-                          />
-                          <span className="text-gray-300">Phone Number</span>
-                        </label>
-                      </div>
-                      <label htmlFor="momoCode" className="block text-sm font-medium text-gray-300 mb-1">
-                        {newEvent.tipPaymentType === TipPaymentType.MOMO_CODE
-                          ? 'MoMo short code (4–10 digits) *'
-                          : 'Phone number (9–15 digits) *'}
-                      </label>
-                      <Input
-                        id="momoCode"
-                        placeholder={
-                          newEvent.tipPaymentType === TipPaymentType.MOMO_CODE
-                            ? 'e.g. 2345'
-                            : 'e.g. 0781234567'
-                        }
-                        value={newEvent.momoCode}
-                        onChange={(e) => {
-                          const max = newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15
-                          const v = e.target.value.replace(/\D/g, '').slice(0, max)
-                          setNewEvent({ ...newEvent, momoCode: v })
-                          setCreateEventError(null)
-                        }}
-                        maxLength={newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? 10 : 15}
-                        className="w-full font-mono"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? (
-                          <>USSD: *182*8*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXX'}</span>*amount#</>
-                        ) : (
-                          <>USSD: *182*1*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXXXXXXX'}</span>*amount#</>
-                        )}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="block text-sm font-medium text-gray-300 mb-3">
-                        Song request fee
-                      </p>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${
-                          (newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.OPTIONAL
-                            ? 'border-green-400/50 bg-green-500/15 text-green-100'
-                            : 'border-white/10 bg-white/5 text-gray-300'
-                        }`}>
-                          <input
-                            type="radio"
-                            name="songRequestFeeMode"
-                            checked={(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.OPTIONAL}
-                            onChange={() =>
-                              setNewEvent({
-                                ...newEvent,
-                                songRequestFeeMode: SongRequestFeeMode.OPTIONAL,
-                                songRequestFeeAmount: '',
-                              })
-                            }
-                            className="rounded-full border-white/30 bg-white/5"
-                          />
-                          <div>
-                            <span className="block font-medium">Optional</span>
-                            <span className="block text-xs text-gray-400">Users can request for free and may add a tip.</span>
-                          </div>
-                        </label>
-                        <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${
-                          (newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY
-                            ? 'border-pink-400/50 bg-pink-500/15 text-pink-100'
-                            : 'border-white/10 bg-white/5 text-gray-300'
-                        }`}>
-                          <input
-                            type="radio"
-                            name="songRequestFeeMode"
-                            checked={(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY}
-                            onChange={() =>
-                              setNewEvent({
-                                ...newEvent,
-                                songRequestFeeMode: SongRequestFeeMode.MANDATORY,
-                              })
-                            }
-                            className="rounded-full border-white/30 bg-white/5"
-                          />
-                          <div>
-                            <span className="block font-medium">Mandatory fee</span>
-                            <span className="block text-xs text-gray-400">Users must pay before their request is submitted.</span>
-                          </div>
-                        </label>
-                      </div>
-                      {(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY && (
-                        <div className="mt-4">
-                          <label htmlFor="songRequestFeeAmount" className="block text-sm font-medium text-gray-300 mb-1">
-                            Request fee amount (RWF) *
-                          </label>
-                          <Input
-                            id="songRequestFeeAmount"
-                            type="number"
-                            min={1}
-                            max={500000}
-                            placeholder="e.g. 1000"
-                            value={newEvent.songRequestFeeAmount}
-                            onChange={(e) => {
-                              setNewEvent({ ...newEvent, songRequestFeeAmount: e.target.value })
-                              setCreateEventError(null)
-                            }}
-                            className="w-full"
-                          />
-                          <p className="mt-1 text-xs text-gray-500">
-                            This amount is charged for every song request on this event.
-                          </p>
-                        </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {newEvent.tipPaymentType === TipPaymentType.MOMO_CODE ? (
+                        <>USSD: *182*8*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXX'}</span>*amount#</>
+                      ) : (
+                        <>USSD: *182*1*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXXXXXXX'}</span>*amount#</>
                       )}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="block text-sm font-medium text-gray-300 mb-3">
+                      Song request fee
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.OPTIONAL
+                          ? 'border-green-400/50 bg-green-500/15 text-green-100'
+                          : 'border-white/10 bg-white/5 text-gray-300'
+                        }`}>
+                        <input
+                          type="radio"
+                          name="songRequestFeeMode"
+                          checked={(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.OPTIONAL}
+                          onChange={() =>
+                            setNewEvent({
+                              ...newEvent,
+                              songRequestFeeMode: SongRequestFeeMode.OPTIONAL,
+                              songRequestFeeAmount: '',
+                            })
+                          }
+                          className="rounded-full border-white/30 bg-white/5"
+                        />
+                        <div>
+                          <span className="block font-medium">Optional</span>
+                          <span className="block text-xs text-gray-400">Users can request for free and may add a tip.</span>
+                        </div>
+                      </label>
+                      <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY
+                          ? 'border-pink-400/50 bg-pink-500/15 text-pink-100'
+                          : 'border-white/10 bg-white/5 text-gray-300'
+                        }`}>
+                        <input
+                          type="radio"
+                          name="songRequestFeeMode"
+                          checked={(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY}
+                          onChange={() =>
+                            setNewEvent({
+                              ...newEvent,
+                              songRequestFeeMode: SongRequestFeeMode.MANDATORY,
+                            })
+                          }
+                          className="rounded-full border-white/30 bg-white/5"
+                        />
+                        <div>
+                          <span className="block font-medium">Mandatory fee</span>
+                          <span className="block text-xs text-gray-400">Users must pay before their request is submitted.</span>
+                        </div>
+                      </label>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <FieldErrorWrapper
-                        error={
-                          createEventError &&
+                    {(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY && (
+                      <div className="mt-4">
+                        <label htmlFor="songRequestFeeAmount" className="block text-sm font-medium text-gray-300 mb-1">
+                          Request fee amount (RWF) *
+                        </label>
+                        <Input
+                          id="songRequestFeeAmount"
+                          type="number"
+                          min={1}
+                          max={500000}
+                          placeholder="e.g. 1000"
+                          value={newEvent.songRequestFeeAmount}
+                          onChange={(e) => {
+                            setNewEvent({ ...newEvent, songRequestFeeAmount: e.target.value })
+                            setCreateEventError(null)
+                          }}
+                          className="w-full"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          This amount is charged for every song request on this event.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FieldErrorWrapper
+                      error={
+                        createEventError &&
                           (createEventError.includes('Start time') || createEventError.includes('present or future'))
-                            ? createEventError
-                            : undefined
-                        }
-                        fieldId="startTime"
-                      >
-                        <DateTimePicker
-                          id="startTime"
-                          placeholder="Start date & time *"
-                          value={newEvent.startTime}
-                          onChange={(v) => {
-                            setNewEvent({ ...newEvent, startTime: v })
-                            setCreateEventError(null)
-                          }}
-                        />
-                      </FieldErrorWrapper>
-                      <FieldErrorWrapper
-                        error={
-                          createEventError && createEventError.includes('End time')
-                            ? createEventError
-                            : undefined
-                        }
-                        fieldId="endTime"
-                      >
-                        <DateTimePicker
-                          id="endTime"
-                          placeholder="End date & time *"
-                          value={newEvent.endTime}
-                          onChange={(v) => {
-                            setNewEvent({ ...newEvent, endTime: v })
-                            setCreateEventError(null)
-                          }}
-                        />
-                      </FieldErrorWrapper>
-                    </div>
-                    <div className="flex gap-4">
-                      <GlowButton noMotion
-                        type="submit"
-                        disabled={editingEventId ? updateEventMutation.isPending : createEventMutation.isPending}
-                        glowColor="pink"
-                        className="flex-1"
-                      >
-                        {editingEventId 
-                          ? (updateEventMutation.isPending ? 'Updating...' : 'Update Event')
-                          : (createEventMutation.isPending ? 'Creating...' : 'Create Event')
-                        }
-                      </GlowButton>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setShowCreateEvent(false)
-                          setEditingEventId(null)
+                          ? createEventError
+                          : undefined
+                      }
+                      fieldId="startTime"
+                    >
+                      <DateTimePicker
+                        id="startTime"
+                        placeholder="Start date & time *"
+                        value={newEvent.startTime}
+                        onChange={(v) => {
+                          setNewEvent({ ...newEvent, startTime: v })
                           setCreateEventError(null)
                         }}
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </GlassCard>
-              </div>
+                      />
+                    </FieldErrorWrapper>
+                    <FieldErrorWrapper
+                      error={
+                        createEventError && createEventError.includes('End time')
+                          ? createEventError
+                          : undefined
+                      }
+                      fieldId="endTime"
+                    >
+                      <DateTimePicker
+                        id="endTime"
+                        placeholder="End date & time *"
+                        value={newEvent.endTime}
+                        onChange={(v) => {
+                          setNewEvent({ ...newEvent, endTime: v })
+                          setCreateEventError(null)
+                        }}
+                      />
+                    </FieldErrorWrapper>
+                  </div>
+                  <div className="flex gap-4">
+                    <GlowButton noMotion
+                      type="submit"
+                      disabled={editingEventId ? updateEventMutation.isPending : createEventMutation.isPending}
+                      glowColor="pink"
+                      className="flex-1"
+                    >
+                      {editingEventId
+                        ? (updateEventMutation.isPending ? 'Updating...' : 'Update Event')
+                        : (createEventMutation.isPending ? 'Creating...' : 'Create Event')
+                      }
+                    </GlowButton>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCreateEvent(false)
+                        setEditingEventId(null)
+                        setCreateEventError(null)
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </GlassCard>
             </div>
-          )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {/* Events List — hidden on mobile (use drawer); visible from tablet (md) */}
@@ -1663,9 +1660,9 @@ export default function DjDashboardPage() {
                           >
                             Played
                           </button>
+                        </div>
                       </div>
-                      </div>
-                      </div>
+                    </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {requestTab === 'active' && (
                         <>
@@ -1695,7 +1692,7 @@ export default function DjDashboardPage() {
                         <option value="recent">Most recent</option>
                         <option value="oldest">Oldest</option>
                       </select>
-                      </div>
+                    </div>
                   </div>
                   <div className="space-y-3 max-h-[70vh] overflow-y-auto">
                     {requests && requests.length > 0 ? (
@@ -1706,11 +1703,10 @@ export default function DjDashboardPage() {
                             {displayed.map((request) => (
                               <div
                                 key={request.id}
-                                className={`glass rounded-xl p-0 overflow-hidden transition-all hover:bg-white/5 ${
-                                  highlightRequestId === request.id
+                                className={`glass rounded-xl p-0 overflow-hidden transition-all hover:bg-white/5 ${highlightRequestId === request.id
                                     ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20'
                                     : 'border border-white/8'
-                                }`}
+                                  }`}
                               >
                                 {/* Song track header */}
                                 <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5 border-b border-white/8 bg-white/[0.03]">
@@ -1724,15 +1720,14 @@ export default function DjDashboardPage() {
                                     </div>
                                   </div>
                                   <span
-                                    className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                      request.status === RequestStatus.ACCEPTED
+                                    className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${request.status === RequestStatus.ACCEPTED
                                         ? 'bg-green-500/20 text-green-400 border border-green-500/50'
                                         : request.status === RequestStatus.DECLINED
-                                        ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                                        : request.status === RequestStatus.PLAYED
-                                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                                        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
-                                    }`}
+                                          ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                          : request.status === RequestStatus.PLAYED
+                                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                                            : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                                      }`}
                                   >
                                     {request.status}
                                   </span>
@@ -1993,78 +1988,77 @@ export default function DjDashboardPage() {
 
         {/* Full-screen request mode overlay */}
         {fullScreenRequests && selectedEvent && (
-            <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-md flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
-                <div className="flex items-center gap-4">
-                  <span className="text-lg font-bold text-white">{selectedEvent.name} — Requests</span>
-                  <span className="text-sm text-green-400">
-                    {typeof selectedEvent?.totalTipRevenue === 'number' || typeof selectedEvent?.totalTipRevenue === 'string'
-                      ? `${Number(selectedEvent.totalTipRevenue).toLocaleString()} RWF`
-                      : '0 RWF'}
-                  </span>
-                </div>
-                <GlowButton noMotion
-                  type="button"
-                  onClick={() => setFullScreenRequests(false)}
-                  glowColor="red"
-                  size="sm"
-                  className="min-h-[44px]"
-                >
-                  <Minimize2 className="w-4 h-4 mr-2" />
-                  Exit full screen
-                </GlowButton>
+          <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-md flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-bold text-white">{selectedEvent.name} — Requests</span>
+                <span className="text-sm text-green-400">
+                  {typeof selectedEvent?.totalTipRevenue === 'number' || typeof selectedEvent?.totalTipRevenue === 'string'
+                    ? `${Number(selectedEvent.totalTipRevenue).toLocaleString()} RWF`
+                    : '0 RWF'}
+                </span>
               </div>
-              <div className="flex flex-wrap items-center gap-2 p-4 border-b border-white/10 flex-shrink-0">
-                <div className="flex rounded-lg overflow-hidden border border-white/20">
-                  <button
-                    type="button"
-                    onClick={() => { setRequestTab('active'); setRequestFilter('active') }}
-                    className={`px-3 py-2 text-sm font-medium min-h-[44px] ${requestTab === 'active' ? 'bg-purple-500/30 text-purple-200' : 'bg-white/5 text-gray-400'}`}
-                  >
-                    Active
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRequestTab('played')}
-                    className={`px-3 py-2 text-sm font-medium min-h-[44px] ${requestTab === 'played' ? 'bg-blue-500/30 text-blue-200' : 'bg-white/5 text-gray-400'}`}
-                  >
-                    Played
-                  </button>
-                </div>
-                {requestTab === 'active' && (
-                  <select
-                    value={requestFilter}
-                    onChange={(e) => setRequestFilter(e.target.value)}
-                    className="rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 min-h-[44px]"
-                  >
-                    <option value="active">All active</option>
-                    <option value="tipped">Tipped only</option>
-                    <option value="no_tip">No tip</option>
-                    <option value="pending">Pending</option>
-                  </select>
-                )}
+              <GlowButton noMotion
+                type="button"
+                onClick={() => setFullScreenRequests(false)}
+                glowColor="red"
+                size="sm"
+                className="min-h-[44px]"
+              >
+                <Minimize2 className="w-4 h-4 mr-2" />
+                Exit full screen
+              </GlowButton>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 p-4 border-b border-white/10 flex-shrink-0">
+              <div className="flex rounded-lg overflow-hidden border border-white/20">
+                <button
+                  type="button"
+                  onClick={() => { setRequestTab('active'); setRequestFilter('active') }}
+                  className={`px-3 py-2 text-sm font-medium min-h-[44px] ${requestTab === 'active' ? 'bg-purple-500/30 text-purple-200' : 'bg-white/5 text-gray-400'}`}
+                >
+                  Active
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRequestTab('played')}
+                  className={`px-3 py-2 text-sm font-medium min-h-[44px] ${requestTab === 'played' ? 'bg-blue-500/30 text-blue-200' : 'bg-white/5 text-gray-400'}`}
+                >
+                  Played
+                </button>
+              </div>
+              {requestTab === 'active' && (
                 <select
-                  value={requestSort}
-                  onChange={(e) => setRequestSort(e.target.value)}
+                  value={requestFilter}
+                  onChange={(e) => setRequestFilter(e.target.value)}
                   className="rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 min-h-[44px]"
                 >
-                  <option value="tip_desc">Highest tip first</option>
-                  <option value="recent">Most recent</option>
-                  <option value="oldest">Oldest</option>
+                  <option value="active">All active</option>
+                  <option value="tipped">Tipped only</option>
+                  <option value="no_tip">No tip</option>
+                  <option value="pending">Pending</option>
                 </select>
-              </div>
-              <div className="flex-1 overflow-y-auto bg-black/60 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
-                <div className="p-4 sm:p-8">
+              )}
+              <select
+                value={requestSort}
+                onChange={(e) => setRequestSort(e.target.value)}
+                className="rounded-lg bg-white/10 border border-white/20 text-sm text-white py-2 px-3 min-h-[44px]"
+              >
+                <option value="tip_desc">Highest tip first</option>
+                <option value="recent">Most recent</option>
+                <option value="oldest">Oldest</option>
+              </select>
+            </div>
+            <div className="flex-1 overflow-y-auto bg-black/60 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
+              <div className="p-4 sm:p-8">
                 {requests && requests.length > 0 ? (
                   <div className="space-y-4 max-w-2xl mx-auto">
                     {requests.slice(0, requestsDisplayCount).map((request) => (
                       <div
                         key={request.id}
-                        className={`glass rounded-xl p-0 overflow-hidden transition-all hover:bg-white/5 ${
-                          highlightRequestId === request.id
+                        className={`glass rounded-xl p-0 overflow-hidden transition-all hover:bg-white/5 ${highlightRequestId === request.id
                             ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-green-500/20'
                             : 'border border-white/8'
-                        }`}
+                          }`}
                       >
                         {/* Song track header */}
                         <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5 border-b border-white/8 bg-white/[0.03]">
@@ -2078,15 +2072,14 @@ export default function DjDashboardPage() {
                             </div>
                           </div>
                           <span
-                            className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                              request.status === RequestStatus.ACCEPTED
+                            className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${request.status === RequestStatus.ACCEPTED
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/50'
                                 : request.status === RequestStatus.DECLINED
-                                ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                                : request.status === RequestStatus.PLAYED
-                                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                                : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
-                            }`}
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                  : request.status === RequestStatus.PLAYED
+                                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                                    : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                              }`}
                           >
                             {request.status}
                           </span>
@@ -2166,10 +2159,10 @@ export default function DjDashboardPage() {
                 ) : (
                   <p className="text-gray-400 text-center py-12">No requests in this view</p>
                 )}
-                </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   )
