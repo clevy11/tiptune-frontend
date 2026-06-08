@@ -24,6 +24,11 @@ export enum TipPaymentType {
   PHONE_NUMBER = 'PHONE_NUMBER',
 }
 
+export enum SongRequestFeeMode {
+  OPTIONAL = 'OPTIONAL',
+  MANDATORY = 'MANDATORY',
+}
+
 /** DJ profile link type (Instagram, Mixcloud, website, or custom). */
 export enum ProfileLinkType {
   INSTAGRAM = 'INSTAGRAM',
@@ -67,6 +72,8 @@ export interface Event {
   createdBy: User
   djMomoCode?: string
   tipPaymentType?: TipPaymentType
+  songRequestFeeMode?: SongRequestFeeMode
+  songRequestFeeAmount?: number | string | null
 }
 
 // DJ-specific types
@@ -83,6 +90,8 @@ export interface DjEvent {
   totalTipRevenue?: number | string
   momoCode?: string
   tipPaymentType?: TipPaymentType
+  songRequestFeeMode?: SongRequestFeeMode
+  songRequestFeeAmount?: number | string | null
 }
 
 export interface DjSongRequest {
@@ -115,6 +124,8 @@ export interface AdminEvent {
   creatorEmail: string
   requestCount: number
   totalTipRevenue?: number | string
+  songRequestFeeMode?: SongRequestFeeMode
+  songRequestFeeAmount?: number | string | null
 }
 
 export interface AdminRequest {
@@ -191,6 +202,8 @@ export interface EventRequest {
   /** MoMo code (4–10 digits) or phone number (9–15 digits). */
   momoCode: string
   tipPaymentType?: TipPaymentType
+  songRequestFeeMode?: SongRequestFeeMode
+  songRequestFeeAmount?: string
   startTime: string
   endTime: string
   status: EventStatus

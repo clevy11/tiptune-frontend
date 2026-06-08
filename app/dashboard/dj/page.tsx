@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { Music, Plus, LogOut, Menu, CheckCircle2, XCircle, PlayCircle, BarChart3, Banknote, Filter, HelpCircle, ChevronDown, ChevronUp, Maximize2, Minimize2, Edit2, Trash2, StopCircle, QrCode, Download, FileDown, User, Users } from 'lucide-react'
 import type { DjEvent, DjSongRequest, EventRequest, Notification, TipInfoResponse, TipRecordResponse, TipSettingsRequest, DjRevenueSummaryResponse } from '@/lib/types'
-import { EventStatus, RequestStatus, Role, TipPaymentType } from '@/lib/types'
+import { EventStatus, RequestStatus, Role, SongRequestFeeMode, TipPaymentType } from '@/lib/types'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ToastNotification } from '@/components/notifications/ToastNotification'
 import { useNotificationStore } from '@/store/notificationStore'
@@ -318,6 +318,8 @@ export default function DjDashboardPage() {
     description: '',
     momoCode: '',
     tipPaymentType: TipPaymentType.MOMO_CODE,
+    songRequestFeeMode: SongRequestFeeMode.OPTIONAL,
+    songRequestFeeAmount: '',
     startTime: '',
     endTime: '',
     status: EventStatus.ACTIVE,
@@ -541,6 +543,8 @@ export default function DjDashboardPage() {
         description: '',
         momoCode: '',
         tipPaymentType: TipPaymentType.MOMO_CODE,
+        songRequestFeeMode: SongRequestFeeMode.OPTIONAL,
+        songRequestFeeAmount: '',
         startTime: '',
         endTime: '',
         status: EventStatus.ACTIVE,
@@ -608,6 +612,16 @@ export default function DjDashboardPage() {
       return
     }
 
+    const feeMode = newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL
+    const feeValue = newEvent.songRequestFeeAmount?.trim() ?? ''
+    if (feeMode === SongRequestFeeMode.MANDATORY) {
+      const parsedFee = Number(feeValue)
+      if (!Number.isFinite(parsedFee) || parsedFee < 1 || parsedFee > 500000) {
+        setCreateEventError('Song request fee must be between 1 and 500,000 RWF')
+        return
+      }
+    }
+
     const now = new Date()
     const start = newEvent.startTime ? new Date(newEvent.startTime) : null
     const end = newEvent.endTime ? new Date(newEvent.endTime) : null
@@ -621,7 +635,12 @@ export default function DjDashboardPage() {
       return
     }
 
-    createEventMutation.mutate({ ...newEvent, momoCode: code })
+    createEventMutation.mutate({
+      ...newEvent,
+      momoCode: code,
+      songRequestFeeMode: feeMode,
+      songRequestFeeAmount: feeMode === SongRequestFeeMode.MANDATORY ? feeValue : undefined,
+    })
   }
 
   const handleStatusUpdate = useCallback((id: number, status: RequestStatus) => {
@@ -638,6 +657,8 @@ export default function DjDashboardPage() {
         description: fullEvent.description || '',
         momoCode: fullEvent.momoCode || '',
         tipPaymentType: fullEvent.tipPaymentType ?? TipPaymentType.MOMO_CODE,
+        songRequestFeeMode: fullEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL,
+        songRequestFeeAmount: fullEvent.songRequestFeeAmount != null ? String(fullEvent.songRequestFeeAmount) : '',
         startTime: fullEvent.startTime ? new Date(fullEvent.startTime).toISOString().slice(0, 16) : '',
         endTime: fullEvent.endTime ? new Date(fullEvent.endTime).toISOString().slice(0, 16) : '',
         status: fullEvent.status,
@@ -649,6 +670,8 @@ export default function DjDashboardPage() {
         description: event.description || '',
         momoCode: event.momoCode || '',
         tipPaymentType: event.tipPaymentType ?? TipPaymentType.MOMO_CODE,
+        songRequestFeeMode: event.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL,
+        songRequestFeeAmount: event.songRequestFeeAmount != null ? String(event.songRequestFeeAmount) : '',
         startTime: event.startTime ? new Date(event.startTime).toISOString().slice(0, 16) : '',
         endTime: event.endTime ? new Date(event.endTime).toISOString().slice(0, 16) : '',
         status: event.status,
@@ -667,6 +690,16 @@ export default function DjDashboardPage() {
       return
     }
 
+    const feeMode = newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL
+    const feeValue = newEvent.songRequestFeeAmount?.trim() ?? ''
+    if (feeMode === SongRequestFeeMode.MANDATORY) {
+      const parsedFee = Number(feeValue)
+      if (!Number.isFinite(parsedFee) || parsedFee < 1 || parsedFee > 500000) {
+        setCreateEventError('Song request fee must be between 1 and 500,000 RWF')
+        return
+      }
+    }
+
     const now = new Date()
     const start = newEvent.startTime ? new Date(newEvent.startTime) : null
     const end = newEvent.endTime ? new Date(newEvent.endTime) : null
@@ -680,7 +713,15 @@ export default function DjDashboardPage() {
       return
     }
 
-    updateEventMutation.mutate({ id: editingEventId, data: { ...newEvent, momoCode: code } })
+    updateEventMutation.mutate({
+      id: editingEventId,
+      data: {
+        ...newEvent,
+        momoCode: code,
+        songRequestFeeMode: feeMode,
+        songRequestFeeAmount: feeMode === SongRequestFeeMode.MANDATORY ? feeValue : undefined,
+      },
+    })
   }, [editingEventId, newEvent, updateEventMutation])
 
   const handleDeleteEvent = useCallback((id: number) => {
@@ -986,6 +1027,17 @@ export default function DjDashboardPage() {
             <GlowButton noMotion
               onClick={() => {
                 setCreateEventError(null)
+                setNewEvent({
+                  name: '',
+                  description: '',
+                  momoCode: '',
+                  tipPaymentType: TipPaymentType.MOMO_CODE,
+                  songRequestFeeMode: SongRequestFeeMode.OPTIONAL,
+                  songRequestFeeAmount: '',
+                  startTime: '',
+                  endTime: '',
+                  status: EventStatus.ACTIVE,
+                })
                 setShowCreateEvent(true)
               }}
               glowColor="pink"
@@ -1111,6 +1163,81 @@ export default function DjDashboardPage() {
                           <>USSD: *182*1*1*<span className="text-gray-400">{newEvent.momoCode || 'XXXXXXXXX'}</span>*amount#</>
                         )}
                       </p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <p className="block text-sm font-medium text-gray-300 mb-3">
+                        Song request fee
+                      </p>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${
+                          (newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.OPTIONAL
+                            ? 'border-green-400/50 bg-green-500/15 text-green-100'
+                            : 'border-white/10 bg-white/5 text-gray-300'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="songRequestFeeMode"
+                            checked={(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.OPTIONAL}
+                            onChange={() =>
+                              setNewEvent({
+                                ...newEvent,
+                                songRequestFeeMode: SongRequestFeeMode.OPTIONAL,
+                                songRequestFeeAmount: '',
+                              })
+                            }
+                            className="rounded-full border-white/30 bg-white/5"
+                          />
+                          <div>
+                            <span className="block font-medium">Optional</span>
+                            <span className="block text-xs text-gray-400">Users can request for free and may add a tip.</span>
+                          </div>
+                        </label>
+                        <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${
+                          (newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY
+                            ? 'border-pink-400/50 bg-pink-500/15 text-pink-100'
+                            : 'border-white/10 bg-white/5 text-gray-300'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="songRequestFeeMode"
+                            checked={(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY}
+                            onChange={() =>
+                              setNewEvent({
+                                ...newEvent,
+                                songRequestFeeMode: SongRequestFeeMode.MANDATORY,
+                              })
+                            }
+                            className="rounded-full border-white/30 bg-white/5"
+                          />
+                          <div>
+                            <span className="block font-medium">Mandatory fee</span>
+                            <span className="block text-xs text-gray-400">Users must pay before their request is submitted.</span>
+                          </div>
+                        </label>
+                      </div>
+                      {(newEvent.songRequestFeeMode ?? SongRequestFeeMode.OPTIONAL) === SongRequestFeeMode.MANDATORY && (
+                        <div className="mt-4">
+                          <label htmlFor="songRequestFeeAmount" className="block text-sm font-medium text-gray-300 mb-1">
+                            Request fee amount (RWF) *
+                          </label>
+                          <Input
+                            id="songRequestFeeAmount"
+                            type="number"
+                            min={1}
+                            max={500000}
+                            placeholder="e.g. 1000"
+                            value={newEvent.songRequestFeeAmount}
+                            onChange={(e) => {
+                              setNewEvent({ ...newEvent, songRequestFeeAmount: e.target.value })
+                              setCreateEventError(null)
+                            }}
+                            className="w-full"
+                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            This amount is charged for every song request on this event.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <FieldErrorWrapper
