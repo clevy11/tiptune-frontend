@@ -8,7 +8,7 @@ export const revalidate = 60
 export const metadata: Metadata = {
   metadataBase: new URL('https://tiptune.space'),
   title: {
-    default: 'TipTune - Turn Moments Into Music',
+    default: 'TipTune - Real-Time Song Requests for Live Events',
     template: '%s | TipTune',
   },
   description: 'Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.',
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   keywords: [
     'TipTune',
     'DJ tipping',
+    'Artist tipping',
     'song requests',
     'event QR code',
     'Rwanda nightlife',
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: 'https://tiptune.space',
-    title: 'TipTune - Turn Moments Into Music',
+    title: 'TipTune - Real-Time Song Requests for Live Events',
     description: 'Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.',
     siteName: 'TipTune',
     images: [
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TipTune - Turn Moments Into Music',
+    title: 'TipTune - Real-Time Song Requests for Live Events',
     description: 'Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.',
     images: ['/images/landing/logo.png'],
   },

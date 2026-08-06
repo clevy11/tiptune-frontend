@@ -80,7 +80,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4"
           >
-            The vibe
+            For Every Event Type
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -89,7 +89,7 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.08 }}
             className="text-base sm:text-lg text-[#D1D5DB] mb-8 sm:mb-10 max-w-2xl"
           >
-            Premium experiences, from club nights to outdoor events.
+            From intimate club nights and rooftop parties to corporate events and outdoor festivals.
           </motion.p>
           <InteractiveImageGrid />
         </section>
@@ -104,10 +104,10 @@ export default function Home() {
         >
           <div className="rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-14 text-center bg-[#121826]/80 border border-white/10 shadow-[0_0_30px_rgba(0,245,195,0.08)] hover:shadow-[0_0_25px_rgba(0,245,195,0.12)] hover:border-[#00F5C3]/20 transition-all duration-300">
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 text-gradient">
-              Ready to Amplify Your Events?
+              Start Your Event in 2 Minutes
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-[#D1D5DB] mb-6 sm:mb-8 max-w-xl mx-auto">
-              Join DJs and artists creating unforgettable music experiences.
+              Create a free event, share the unique link with your audience, and start taking requests instantly.
             </p>
             <Link href="/register">
               <GlowButton size="lg" glowColor="teal" className="min-h-[48px] text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-6 focus-visible:ring-2 focus-visible:ring-[#00F5C3] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F14]">
@@ -122,9 +122,9 @@ export default function Home() {
           <div className="rounded-2xl p-6 sm:p-8 bg-[#0B0F14]/70 border border-white/10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white">Need help?</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-white">Support &amp; Partnership</h3>
                 <p className="text-sm sm:text-base text-[#D1D5DB] mt-1">
-                  Contact us anytime — fast support and trusted communication.
+                  Questions about setup or interested in partnering? Reach out to our team for a quick response.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">

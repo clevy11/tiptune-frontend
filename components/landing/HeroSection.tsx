@@ -26,12 +26,12 @@ export function HeroSection() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
           className="space-y-5 sm:space-y-8"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight">
-            <span className="text-white">Turn Moments</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight">
+            <span className="text-white">Real-Time Song</span>
             <br />
-            <span className="text-gradient">Into Music</span>
+            <span className="text-gradient">Requests for Live Events</span>
           </h1>
-          <p className="text-base sm:text-xl md:text-2xl font-medium text-[#E5E7EB] max-w-xl leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl font-medium text-[#E5E7EB] max-w-xl leading-relaxed">
             Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">

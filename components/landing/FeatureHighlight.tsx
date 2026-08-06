@@ -1,12 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Zap, Music, Sparkles } from 'lucide-react'
+import { CalendarPlus, Share2, ListMusic } from 'lucide-react'
 
 const FEATURES = [
-  { icon: Zap, text: 'Instant Setup' },
-  { icon: Music, text: 'Live Requests' },
-  { icon: Sparkles, text: 'Real-time Updates' },
+  { icon: CalendarPlus, text: 'Create Event' },
+  { icon: Share2, text: 'Share Link' },
+  { icon: ListMusic, text: 'Manage Requests Live' },
 ]
 
 export function FeatureHighlight() {

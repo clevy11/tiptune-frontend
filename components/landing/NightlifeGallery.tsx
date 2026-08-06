@@ -19,9 +19,9 @@ export function NightlifeGallery() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-4xl md:text-5xl font-bold text-white mb-2"
+          className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2"
         >
-          Kigali after dark
+          Powering Events in Kigali &amp; Beyond
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
@@ -30,7 +30,7 @@ export function NightlifeGallery() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-lg text-[#D1D5DB] max-w-2xl"
         >
-          Where the music never stops and every moment turns into a request.
+          The simplest way for DJs to manage crowd requests and for attendees to vote on the next track.
         </motion.p>
       </div>
       <div className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 px-6 scrollbar-hide">
