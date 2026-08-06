@@ -1,7 +1,7 @@
 {
   "name": "TipTune",
   "short_name": "TipTune",
-  "description": "Song requests and tipping for DJs and events.",
+  "description": "Song requests and tipping for DJs, Artists and events.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#07090f",

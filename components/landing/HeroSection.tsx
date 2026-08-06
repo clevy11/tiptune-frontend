@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GlowButton } from '@/components/GlowButton'
 import { HeroWaveBottom } from '@/components/theme/HeroWaveBottom'
-import { Sparkles } from 'lucide-react'
+import { JoinEventModal } from '@/components/landing/JoinEventModal'
+import { CalendarPlus, LogIn } from 'lucide-react'
 
 /** Replace with your Kigali nightlife images in public/images/landing/ */
 const HERO_IMAGES = [
@@ -15,6 +17,8 @@ const HERO_IMAGES = [
 ]
 
 export function HeroSection() {
+  const [joinOpen, setJoinOpen] = useState(false)
+
   return (
     <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 relative min-h-[70vh] sm:min-h-[85vh] flex flex-col justify-center">
       <HeroWaveBottom />
@@ -34,18 +38,26 @@ export function HeroSection() {
           <p className="text-base sm:text-lg md:text-xl font-medium text-[#E5E7EB] max-w-xl leading-relaxed">
             Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.
           </p>
+          <p className="inline-flex items-center gap-2 self-start rounded-full bg-green-500/15 border border-green-500/40 px-4 py-2 text-sm sm:text-base font-medium text-green-400">
+             Currently Free – No Credit Card Required
+          </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link href="/register">
               <GlowButton size="lg" glowColor="teal" className="min-h-[48px] text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto">
-                Create Your QR
-                <Sparkles className="ml-2 w-4 h-4 sm:w-5 sm:h-5 inline" />
+                Start Your Free Event
+                <CalendarPlus className="ml-2 w-4 h-4 sm:w-5 sm:h-5 inline" />
               </GlowButton>
             </Link>
-            <Link href="/events">
-              <GlowButton size="lg" variant="outline" glowColor="teal" className="min-h-[48px] text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto">
-                Browse Events
-              </GlowButton>
-            </Link>
+            <GlowButton
+              size="lg"
+              variant="outline"
+              glowColor="teal"
+              onClick={() => setJoinOpen(true)}
+              className="min-h-[48px] text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto"
+            >
+              Join an Event
+              <LogIn className="ml-2 w-4 h-4 sm:w-5 sm:h-5 inline" />
+            </GlowButton>
           </div>
         </motion.div>
 
@@ -93,6 +105,8 @@ export function HeroSection() {
           </div>
         </motion.div>
       </div>
+
+      <JoinEventModal open={joinOpen} onClose={() => setJoinOpen(false)} />
     </section>
   )
 }

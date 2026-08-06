@@ -30,7 +30,7 @@ export function NightlifeGallery() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-lg text-[#D1D5DB] max-w-2xl"
         >
-          The simplest way for DJs to manage crowd requests and for attendees to vote on the next track.
+          The simplest way for DJs and Artists to manage crowd requests and for attendees to vote on the next track.
         </motion.p>
       </div>
       <div className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 px-6 scrollbar-hide">
