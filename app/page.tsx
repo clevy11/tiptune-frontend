@@ -68,14 +68,14 @@ export default function Home() {
         >
           <div className="rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-14 text-center bg-[#121826]/80 border border-white/10 shadow-[0_0_30px_rgba(0,245,195,0.08)] hover:shadow-[0_0_25px_rgba(0,245,195,0.12)] hover:border-[#00F5C3]/20 transition-all duration-300">
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 text-gradient">
-              Start Your Free Event in 2 Minutes
+              Book the Main Floor in Minutes
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-[#D1D5DB] mb-6 sm:mb-8 max-w-xl mx-auto">
-              Create your event, share the unique link with your audience, and start taking requests instantly – <span className="text-[#00F5C3] font-semibold">completely free</span>.
+              Create your event, share the unique link with your audience, and start taking requests instantly — like hanging the flyer at the club door. Completely free during early access.
             </p>
             <Link href="/register">
               <GlowButton size="lg" glowColor="teal" className="min-h-[48px] text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-6 focus-visible:ring-2 focus-visible:ring-[#00F5C3] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F14]">
-                Start Free Today
+                Start Your Free Event
               </GlowButton>
             </Link>
           </div>

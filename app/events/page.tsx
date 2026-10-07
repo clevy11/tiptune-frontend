@@ -66,7 +66,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <AnimatedBackground />
-      
+
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -87,7 +87,7 @@ export default function EventsPage() {
         {!events || events.length === 0 ? (
           <GlassCard glow="blue" className="text-center py-12">
             <Music className="w-16 h-16 mx-auto mb-4 text-gray-600" aria-hidden />
-            <p className="text-gray-400 text-base sm:text-lg">No active events at the moment.</p>
+            <p className="text-gray-400 text-base sm:text-lg">No events on the schedule right now. Check back later — or drop your first beat.</p>
           </GlassCard>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

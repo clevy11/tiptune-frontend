@@ -15,17 +15,17 @@ const VALUES = [
   {
     icon: Music,
     title: 'Built for the Crowd',
-    text: 'Every feature starts with the listener — faster requests, fair queues, and music the room actually wants.',
+    text: 'Every feature starts with the listener — faster requests, fair queues, and music the room actually wants. Like the crowd shaping the set, one track at a time.',
   },
   {
     icon: Users,
     title: 'Built for DJs',
-    text: 'We give performers simple tools to read the room, manage demand, and get paid for their craft.',
+    text: 'We give performers simple tools to read the room from the booth, manage demand in real-time, and get paid for their craft without losing the vibe.',
   },
   {
     icon: Heart,
     title: 'Built for Communities',
-    text: 'From Kigali to the world, we help local scenes connect audiences with the artists behind the decks.',
+    text: 'From Kigali to the world, we help local scenes connect audiences with the artists behind the decks — one event, one request, one shared moment at a time.',
   },
 ]
 
@@ -42,12 +42,13 @@ export default function AboutPage() {
               TipTune started with a simple observation: in a packed venue, the DJ can hear every
               song request except the ones the crowd actually wants. We built a platform that closes
               that gap — letting attendees request and vote on tracks from their phones while giving
-              DJs a live dashboard to manage the room.
+              DJs a live dashboard to read the room from the booth.
             </p>
             <p>
               Today, TipTune powers club nights, rooftop parties, and outdoor events in Kigali and
-              beyond. Our goal is simple: turn every moment of a live event into a shared musical
-              experience.
+              beyond. Our goal is simple: book the main floor, hang the flyer, and turn every moment
+              of a live event into a shared musical experience — where the crowd shapes the set and
+              the DJ reads the room in real time.
             </p>
           </section>
 

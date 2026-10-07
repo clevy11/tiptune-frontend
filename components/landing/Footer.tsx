@@ -47,7 +47,7 @@ export function Footer() {
               <span className="text-xl font-bold text-gradient">TipTune</span>
             </Link>
             <p className="text-sm text-[#D1D5DB] leading-relaxed">
-              Real-time song requests for live events. The simplest way for DJs and Artists to manage crowd requests and for attendees to vote on the next track.
+              Real-time song requests for live events. The simplest way for DJs and Artists to read the room from the booth, and for attendees to shape the set with a tap.
             </p>
             <div className="mt-4 flex items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full bg-green-500/15 border border-green-500/40 px-3 py-1 text-xs font-medium text-green-400">
@@ -123,7 +123,7 @@ export function Footer() {
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-2 text-xs text-gray-400">
               <ExternalLink className="w-3.5 h-3.5" aria-hidden />
-              Built for DJs and Artists in Kigali &amp; beyond
+              From the booth to the dancefloor — Kigali &amp; beyond
             </span>
             <div className="flex items-center gap-3">
               {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (

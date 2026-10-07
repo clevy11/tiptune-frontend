@@ -203,6 +203,12 @@ export default function EventDetailPage() {
                         Requested by: {request.user.name} •{' '}
                         {formatInRwanda(request.createdAt)}
                       </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {request.status === 'PENDING' && 'Waiting for the DJ to read the room'}
+                        {request.status === 'ACCEPTED' && 'Added to the setlist'}
+                        {request.status === 'PLAYED' && 'Got the crowd moving'}
+                        {request.status === 'DECLINED' && 'Removed from the queue'}
+                      </p>
                     </div>
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'ACCEPTED'

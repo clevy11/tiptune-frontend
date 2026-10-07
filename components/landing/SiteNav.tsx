@@ -85,7 +85,7 @@ export function SiteNav() {
         <div className="hidden sm:block">
           <Link href="/register">
             <GlowButton glowColor="teal" className="min-h-[44px] px-3 sm:px-4 text-sm sm:text-base">
-              Get Started
+              Drop Your First Beat
             </GlowButton>
           </Link>
         </div>
@@ -132,7 +132,7 @@ export function SiteNav() {
                 </Link>
                 <Link href="/register" onClick={() => setMobileOpen(false)}>
                   <GlowButton glowColor="teal" className="w-full min-h-[44px]">
-                    Get Started
+                    Drop Your First Beat
                   </GlowButton>
                 </Link>
               </div>
