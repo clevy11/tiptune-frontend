@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
+import { SupportChat } from '@/components/support/SupportChat'
 
 /** ISR: revalidate server-rendered content every 60s (e.g. metadata, server components) */
 export const revalidate = 60
@@ -116,6 +117,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <Providers>{children}</Providers>
+        <SupportChat />
       </body>
     </html>
   )
