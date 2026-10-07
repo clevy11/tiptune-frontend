@@ -32,17 +32,17 @@ export function LiveActivity() {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
         </span>
-        {eventsLive} events live right now
+        {eventsLive} events on the floor right now
       </span>
       <span className="hidden sm:block w-px h-5 bg-white/10" aria-hidden />
       <span className="inline-flex items-center gap-2 text-sm text-[#D1D5DB]">
         <Music className="w-4 h-4 text-[#00F5C3]" aria-hidden />
-        {requestsToday} requests made today
+        {requestsToday} tracks on tonight&apos;s setlist
       </span>
       <span className="hidden sm:block w-px h-5 bg-white/10" aria-hidden />
       <span className="inline-flex items-center gap-2 text-sm text-[#D1D5DB]">
         <Flame className="w-4 h-4 text-orange-400" aria-hidden />
-        Serving events across Kigali
+        From the booth to the dancefloor in Kigali
       </span>
     </motion.div>
   )

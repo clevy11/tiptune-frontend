@@ -34,7 +34,7 @@ export default function PricingPage() {
             <Sparkles className="mx-auto h-8 w-8 text-[#00F5C3] mb-3" aria-hidden />
             <p className="text-4xl sm:text-5xl font-bold text-white mb-3">100% Free</p>
             <p className="text-[#D1D5DB] max-w-md mx-auto mb-6">
-              No hidden fees. No credit card required. Just create your event and start taking requests.
+              Like the guest list — walk in and start spinning. No hidden fees, no credit card required.
             </p>
 
             <ul className="mx-auto mb-8 grid max-w-md gap-2 text-left text-sm">
@@ -50,7 +50,7 @@ export default function PricingPage() {
               href="/register"
               className="inline-block rounded-xl bg-[#00F5C3] px-8 py-3 text-sm font-semibold text-black hover:bg-[#00F5C3]/90 transition-colors shadow-[0_0_24px_rgba(0,245,195,0.3)]"
             >
-              Start Your Free Event
+              Drop Your First Beat
             </Link>
           </div>
 

@@ -5,9 +5,9 @@ import Image from 'next/image'
 
 /** Kigali nightlife images — place in public/images/landing/ */
 const GRID_IMAGES = [
-  { src: '/images/landing/grid-1.jpg', alt: 'Nightlife scene' },
-  { src: '/images/landing/grid-2.jpg', alt: 'Club atmosphere' },
-  { src: '/images/landing/grid-3.jpg', alt: 'Lights and crowd' },
+  { src: '/images/landing/grid-1.jpg', alt: 'Kigali dancefloor — the crowd responding to the beat' },
+  { src: '/images/landing/grid-2.jpg', alt: 'Reading the room from the DJ booth' },
+  { src: '/images/landing/grid-3.jpg', alt: 'The main floor — where the night comes alive' },
 ]
 
 export function InteractiveImageGrid() {

@@ -36,7 +36,7 @@ export function DashboardPreview() {
             </span>
           </div>
           <p className="text-base sm:text-lg text-[#D1D5DB] max-w-2xl mx-auto">
-            Every event gets a real-time dashboard — manage requests, track tips, and stay in control while the music plays.
+            Your DJ booth in the cloud. Manage requests, read the room, and count the till — all while the music plays.
           </p>
         </motion.div>
 

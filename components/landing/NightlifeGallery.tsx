@@ -5,9 +5,9 @@ import Image from 'next/image'
 
 /** Full-width Kigali nightlife imagery. Add images to public/images/landing/gallery/ */
 const GALLERY_IMAGES = [
-  { src: '/images/landing/gallery/1.jpg', alt: 'Kigali nightlife — dancing and lights' },
-  { src: '/images/landing/gallery/2.jpg', alt: 'City nightlife scene' },
-  { src: '/images/landing/gallery/3.jpg', alt: 'Club and DJ atmosphere' },
+  { src: '/images/landing/gallery/1.jpg', alt: 'Kigali nightlife — the dancefloor coming alive' },
+  { src: '/images/landing/gallery/2.jpg', alt: 'From the DJ booth — reading the room' },
+  { src: '/images/landing/gallery/3.jpg', alt: 'The main floor — where the night belongs' },
 ]
 
 export function NightlifeGallery() {
@@ -21,7 +21,7 @@ export function NightlifeGallery() {
           transition={{ duration: 0.5 }}
           className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2"
         >
-          Powering Events in Kigali &amp; Beyond
+          From the Booth to the Dancefloor
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
@@ -30,7 +30,7 @@ export function NightlifeGallery() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-lg text-[#D1D5DB] max-w-2xl"
         >
-          The simplest way for DJs and Artists to manage crowd requests and for attendees to vote on the next track.
+          The simplest way for DJs to read the room and for the crowd to shape the set — live in Kigali and beyond.
         </motion.p>
       </div>
       <div className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 px-6 scrollbar-hide">

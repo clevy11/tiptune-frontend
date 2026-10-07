@@ -7,13 +7,13 @@ import Image from 'next/image'
 import { GlowButton } from '@/components/GlowButton'
 import { HeroWaveBottom } from '@/components/theme/HeroWaveBottom'
 import { JoinEventModal } from '@/components/landing/JoinEventModal'
-import { CalendarPlus, LogIn } from 'lucide-react'
+import { CalendarPlus, LogIn, Headphones } from 'lucide-react'
 
 /** Replace with your Kigali nightlife images in public/images/landing/ */
 const HERO_IMAGES = [
-  { src: '/images/landing/hero-1.jpg', alt: 'Kigali nightlife — crowd and lights', position: 'top' },
-  { src: '/images/landing/hero-2.jpg', alt: 'DJ setup and club lights', position: 'center' },
-  { src: '/images/landing/hero-3.jpg', alt: 'Dance floor and atmosphere', position: 'bottom' },
+  { src: '/images/landing/hero-1.jpg', alt: 'Kigali dancefloor — the crowd responding to the beat', position: 'top' },
+  { src: '/images/landing/hero-2.jpg', alt: 'Reading the room from the DJ booth', position: 'center' },
+  { src: '/images/landing/hero-3.jpg', alt: 'The main floor — where the night belongs', position: 'bottom' },
 ]
 
 export function HeroSection() {
@@ -33,18 +33,19 @@ export function HeroSection() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight">
             <span className="text-white">Real-Time Song</span>
             <br />
-            <span className="text-gradient">Requests for Live Events</span>
+            <span className="text-gradient-hero">Requests for Live Events</span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl font-medium text-[#E5E7EB] max-w-xl leading-relaxed">
-            Create instant song request experiences. Generate a QR code, share it at your event, and let the music flow.
+            Book the main floor in two minutes. Generate a QR code, share it at your event, and let the crowd shape the set — the music flows from there.
           </p>
-          <p className="inline-flex items-center gap-2 self-start rounded-full bg-green-500/15 border border-green-500/40 px-4 py-2 text-sm sm:text-base font-medium text-green-400">
-             Currently Free – No Credit Card Required
+          <p className="inline-flex items-center gap-2 self-start rounded-full bg-white/5 border border-teal-400/30 px-4 py-2 text-sm sm:text-base font-medium">
+            <Headphones className="w-4 h-4 text-teal-400" aria-hidden />
+            <span className="text-white">Live at <span className="text-teal-400 font-semibold">12 Kigali venues</span> this month</span>
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link href="/register">
               <GlowButton size="lg" glowColor="teal" className="min-h-[48px] text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto">
-                Start Your Free Event
+                Drop Your First Beat
                 <CalendarPlus className="ml-2 w-4 h-4 sm:w-5 sm:h-5 inline" />
               </GlowButton>
             </Link>

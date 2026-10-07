@@ -13,27 +13,27 @@ export const metadata: Metadata = {
 const FAQS = [
   {
     q: 'Do I need an account to request a song at an event?',
-    a: 'No. Attendees can open the event link on their phone and request or vote on songs without creating an account.',
+    a: 'No. Just like finding the door list, attendees scan the QR or open the link and they\'re on the floor — no sign-up, no friction. Requesting and voting are instant.',
   },
   {
     q: 'How do I create an event as a DJ?',
-    a: 'Sign up for free, then use the dashboard to create your event. TipTune generates a unique link and QR code you can share with your audience.',
+    a: 'Book the main floor in two minutes. Sign up for free, set your event name, date, and MoMo code, and TipTune generates your unique QR code instantly — ready to print or share.',
   },
   {
     q: 'How much does TipTune cost?',
-    a: 'TipTune is currently completely free for all users. We are in early access and want to make it easy for DJs and event organizers to try the platform. No credit card is required, and there are no hidden fees.',
+    a: '100% free during early access. No credit card, no hidden fees. Just like a guest list, you walk in and start spinning. We\'ll always tell you before introducing any paid plans.',
   },
   {
     q: 'Can attendees tip the DJ through TipTune?',
-    a: 'Yes. Depending on the event, attendees can tip via mobile money. Tips are tracked in the DJ dashboard and paid out through the configured payment method.',
+    a: 'Yes — directly through mobile money. Tips roll in while you\'re reading the room, and they\'re tracked in your dashboard. Like counting the till at close, but live.',
   },
   {
     q: 'Can I set a fee for song requests?',
-    a: 'DJs can enable a request fee on their event. The fee is collected during the request flow and visible in the dashboard.',
+    a: 'Yes. DJs can enable a request fee on any event. The fee is collected during the request flow, visible in real-time on your dashboard, and configurable per event.',
   },
   {
     q: 'What happens if an event link stops working?',
-    a: 'Events can be closed by the organizer or expire after their end time. Contact the host for a new link, or reach out to our support team for help.',
+    a: 'Events close when you close them — or after the end time. If the link\'s dead, ask the host for a fresh one, or reach out to our support team. Average response: under 2 hours.',
   },
 ]
 

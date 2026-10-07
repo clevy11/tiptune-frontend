@@ -87,7 +87,7 @@ export default function RegisterPage() {
               TipTune
             </span>
           </h1>
-          <p className="text-sm text-slate-500 mt-2">Set up your account to start receiving tips & requests.</p>
+          <p className="text-sm text-slate-500 mt-2">Book the floor. Start taking requests and tips from your next event.</p>
 
           <div className="h-px bg-gradient-to-r from-purple-500/30 to-transparent my-8" />
 
@@ -180,7 +180,7 @@ export default function RegisterPage() {
               className="w-full h-12 rounded-xl text-white font-[Rajdhani,system-ui] font-semibold tracking-[0.22em] uppercase bg-gradient-to-br from-purple-600 via-purple-500 to-blue-500 shadow-[0_10px_30px_rgba(123,47,247,0.35),0_0_0_1px_rgba(155,89,247,0.25)] transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span className="inline-flex items-center justify-center gap-3">
-                {registerMutation.isPending || isRedirecting ? 'Creating…' : 'Register'}
+                {registerMutation.isPending || isRedirecting ? 'Booking the floor…' : 'Book the Floor'}
                 <span className="h-6 w-6 rounded-full bg-white/15 inline-flex items-center justify-center">
                   <ArrowRight className="w-4 h-4" aria-hidden />
                 </span>
